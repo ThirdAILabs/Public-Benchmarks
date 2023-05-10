@@ -22,6 +22,7 @@ To set up the training, follow these steps:
 
 1. Install `thirdai`.
 2. Install `pygloo`. Note that PyPI wheels are broken, so you might need to build from source, or you can download wheels from [pratkpranav/pygloo release 0.2.0](https://github.com/pratkpranav/pygloo/releases/tag/0.2.0) according to your Python version.
+   * Note: It might happen that ray-collective requires an older numpy version than installed by thirdai. Please then install numpy==1.23.5 for running the script.
 3. Initialize a Ray cluster. Note that the `run.sh` script assumes the cluster already has 48*4 CPUs and each of the workers has access to their training data. If you are trying to run this on a different cluster, you can comment the training `run.sh` as per training.
    - Placing the preprocessed dataset there would be best if you have a shared mount among all workers. If that is not the case, one workaround we can do is to save each of the datasets with the same file name on each node, and they will be loaded independently. In this case, you might need to change the name of the train files too in `train.py`.
 
