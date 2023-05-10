@@ -5,7 +5,7 @@ import numpy as np
 from sklearn.metrics import roc_auc_score
 import thirdai.distributed_bolt as d_bolt
 
-licensing.set_path("new_license.serialized")
+licensing.activate("<YOUR LICENSE KEY HERE>")
 
 
 def parse_args():
