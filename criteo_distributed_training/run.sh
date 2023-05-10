@@ -15,7 +15,7 @@ run_script() {
   echo "Running with ${NUM_NODES} nodes, embedding dimension ${EMBEDDING_DIMENSION}, and ${MODEL_SIZE} model size"
 
   # Execute the script with the current configuration
-  python3 distributed_criteo.py --num_nodes "${NUM_NODES}" --test_file "${TEST_FILE}" --training_folder "${TRAINING_FOLDER}" --embedding_dimension "${EMBEDDING_DIMENSION}"
+  python3 train.py --num_nodes "${NUM_NODES}" --test_file "${TEST_FILE}" --training_folder "${TRAINING_FOLDER}" --embedding_dimension "${EMBEDDING_DIMENSION}"
 }
 
 # Run the script for specific configurations
