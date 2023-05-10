@@ -2,9 +2,9 @@ import numpy as np
 import time
 from data_loader import CriteoBinDataset
 
-TRAIN_DATA = "/share/data/criteo_tb/terabyte_processed_train.bin"
-TEST_DATA = "/share/data/criteo_tb/terabyte_processed_test.bin"
-DESTINATION = "/share/pratik/random-script/"
+TRAIN_DATA = "location/terabyte_processed_train.bin"
+TEST_DATA = "location/terabyte_processed_test.bin"
+DESTINATION = "destination/"
 NUM_FILES = 48
 
 
