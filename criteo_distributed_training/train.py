@@ -158,7 +158,7 @@ print("Training Time:", en - st)
 tabular_model.save(filename="udt_click_prediction.model")
 
 
-# This part of code is memory/CPU intensive as we would be loading the whole test data for evaluation.
+# This part of code is memory/CPU intensive as we would be loading the whole test data(10 GB) for evaluation.
 # If the head machine doesn't have enough memory and RAM. It is recommended to run it on a separate machine.
 
 tabular_model = bolt.UniversalDeepTransformer.load(
