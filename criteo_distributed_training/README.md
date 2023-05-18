@@ -16,6 +16,7 @@ We ran it on VMware vSphere cluster with 12, 24, and 48 nodes, each having 4 vCP
   - vCPUs: 4
   - RAM: 8 GB
 
+Following is the evaluation of UDT on the **Click Through Prediction** Task.
 
 | Parameters | Training Time | AUC    |
 | ---------- | ------------- | ------ |
