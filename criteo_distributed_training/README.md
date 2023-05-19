@@ -6,7 +6,7 @@ We ran it on VMware vSphere cluster with 12, 24, and 48 nodes, each having 4 vCP
 
 ### Machine Configuration:
 
-- **Master Node:**
+- **Head Node:**
   - Number of machines: 1
   - vCPUs: 4
   - RAM: 32 GB
