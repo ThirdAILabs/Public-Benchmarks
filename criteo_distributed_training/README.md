@@ -40,7 +40,14 @@ However, if you need to re-preprocess the data from scratch, follow these instru
 
 ## Training Setup
 
-To set up the training, follow these steps:
+To set up the training with a conda environment follow these steps:
+
+1. conda create -n ray-thirdai-benchmarks python=3.8
+2. conda activate ray-thirdai-benchmark
+3. git clone  git@github.com:ThirdAILabs/Public-Benchmarks.git
+4. pip install -r requirements.txt
+
+To setup without conda environment:
 
 1. Install `thirdai`.
 2. Install `pygloo`. Note that PyPI wheels are broken, so you might need to build from source, or you can download wheels from [pratkpranav/pygloo release 0.2.0](https://github.com/pratkpranav/pygloo/releases/tag/0.2.0) according to your Python version.
