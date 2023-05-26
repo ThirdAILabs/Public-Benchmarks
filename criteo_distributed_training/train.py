@@ -1,11 +1,11 @@
 import argparse
-from thirdai import bolt, licensing
+from thirdai import bolt  # , licensing
 import os
 import numpy as np
 from sklearn.metrics import roc_auc_score
 import thirdai.distributed_bolt as d_bolt
 
-licensing.activate("<YOUR LICENSE KEY HERE>")
+# licensing.activate("<YOUR LICENSE KEY HERE>")
 
 
 def parse_args():
@@ -29,24 +29,24 @@ def parse_args():
     parser.add_argument(
         "--cpus_per_node",
         type=int,
-        default=4,
+        default=2,
         metavar="N",
         help="Number of CPUs allocated per node for the distributed training (default: 4)",
     )
-    parser.add_argument(
-        "--test_file",
-        type=str,
-        required=True,
-        metavar="FILE",
-        help="Path to the test file",
-    )
-    parser.add_argument(
-        "--training_folder",
-        type=str,
-        required=True,
-        metavar="FOLDER",
-        help="Path to the folder containing training files with integer names (0 to num_nodes-1)",
-    )
+    # parser.add_argument(
+    #     "--test_file",
+    #     type=str,
+    #     required=True,
+    #     metavar="FILE",
+    #     help="Path to the test file",
+    # )
+    # parser.add_argument(
+    #     "--training_folder",
+    #     type=str,
+    #     required=True,
+    #     metavar="FOLDER",
+    #     help="Path to the folder containing training files with integer names (0 to num_nodes-1)",
+    # )
     parser.add_argument(
         "--epochs",
         type=int,
@@ -71,7 +71,7 @@ def parse_args():
     parser.add_argument(
         "--max_in_memory_batches",
         type=int,
-        default=100,
+        default=3,
         metavar="N",
         help="Maximum number of in-memory batches (default: 100)",
     )
@@ -142,9 +142,9 @@ st = time.time()
 tabular_model.train_distributed(
     cluster_config=ray_cluster_config(),
     filenames=[
-        os.path.join(args.training_folder, f"train_file{file_id}.txt")
+        f"s3://thirdai-corp-public/criteo_splitted_12/train_file{file_id}.txt"
         if file_id >= 10
-        else os.path.join(args.training_folder, f"train_file0{file_id}.txt")
+        else f"s3://thirdai-corp-public/criteo_splitted_12/train_file0{file_id}.txt"
         for file_id in range(NUM_NODES)
     ],
     epochs=args.epochs,
