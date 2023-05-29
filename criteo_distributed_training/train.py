@@ -1,11 +1,20 @@
 import argparse
 from thirdai import bolt, licensing
-import os
 import numpy as np
 from sklearn.metrics import roc_auc_score
 import thirdai.distributed_bolt as d_bolt
 
 licensing.activate("<YOUR LICENSE KEY HERE>")
+
+
+def cpus_per_node_type(value):
+    # 2 is there just for testing purpose, as we might not want to start whole cluster
+    valid_values = [2, 12, 24, 48]
+    if value not in valid_values:
+        raise argparse.ArgumentTypeError(
+            f"Invalid value for cpus_per_node: {value}. Valid values are {valid_values}"
+        )
+    return value
 
 
 def parse_args():
@@ -21,38 +30,32 @@ def parse_args():
     )
     parser.add_argument(
         "--num_nodes",
-        type=int,
+        type=cpus_per_node_type,
         required=True,
+        default=12,
         metavar="N",
-        help="Number of nodes to use for distributed training of the UDT model",
+        help="Number of CPUs allocated per node for the distributed training. Valid values: 2, 12, 24, 48 (default: 12)",
     )
     parser.add_argument(
         "--cpus_per_node",
         type=int,
-        default=2,
+        default=4,
         metavar="N",
         help="Number of CPUs allocated per node for the distributed training (default: 4)",
     )
-    # parser.add_argument(
-    #     "--test_file",
-    #     type=str,
-    #     required=True,
-    #     metavar="FILE",
-    #     help="Path to the test file",
-    # )
-    # parser.add_argument(
-    #     "--training_folder",
-    #     type=str,
-    #     required=True,
-    #     metavar="FOLDER",
-    #     help="Path to the folder containing training files with integer names (0 to num_nodes-1)",
-    # )
     parser.add_argument(
         "--epochs",
         type=int,
         default=1,
         metavar="N",
         help="Number of epochs to train the model (default: 1)",
+    )
+    parser.add_argument(
+        "--test_file",
+        type=str,
+        default="s3://thirdai-corp-public/test.txt",
+        metavar="FILE",
+        help="Path to the test file",
     )
     parser.add_argument(
         "--learning_rate",
@@ -71,7 +74,7 @@ def parse_args():
     parser.add_argument(
         "--max_in_memory_batches",
         type=int,
-        default=3,
+        default=50,
         metavar="N",
         help="Maximum number of in-memory batches (default: 100)",
     )
@@ -151,6 +154,13 @@ def down_s3_data_callback(data_loader):
         raise RuntimeError("Error occurred during download:", e)
 
 
+training_data_folder = "criteo_splitted_12"
+if args.num_nodes == 2 or args.num_nodes == 48:
+    training_data_folder = "criteo_splitted_48"
+if args.num_nodes == 24:
+    training_data_folder = "criteo_splitted_24"
+
+
 data_types = {
     f"numeric_{i}": bolt.types.numerical(range=(0, 1500)) for i in range(1, 14)
 }
@@ -167,10 +177,16 @@ tabular_model = bolt.UniversalDeepTransformer(
 
 import time
 
+
 st = time.time()
 tabular_model.train_distributed(
     cluster_config=ray_cluster_config(),
-    filenames=["/home/ubuntu/train_file" for _ in range(NUM_NODES)],
+    filenames=[
+        f"s3://thirdai-corp-public/{training_data_folder}/train_file{file_id}.txt"
+        if file_id >= 10
+        else f"s3://thirdai-corp-public/{training_data_folder}/train_file0{file_id}.txt"
+        for file_id in range(NUM_NODES)
+    ],
     epochs=args.epochs,
     learning_rate=args.learning_rate,
     batch_size=args.batch_size,
