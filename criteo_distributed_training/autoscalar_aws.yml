@@ -150,8 +150,8 @@ initialization_commands: []
 # List of shell commands to run to set up nodes.
 setup_commands: 
   - sudo apt-get update -y
-  - sudo DEBIAN_FRONTEND=noninteractive -E apt install python3-pip
-  - pip3 install 'ray[default]' thirdai botocore boto3 https://github.com/pratkpranav/pygloo/releases/download/0.2.0/pygloo-0.2.0-cp310-cp310-linux_x86_64.whl
+  - sudo DEBIAN_FRONTEND=noninteractive -E apt install python3-pip -y
+  - pip3 install 'ray[default]' thirdai botocore boto3 https://github.com/pratkpranav/pygloo/releases/download/0.2.0/pygloo-0.2.0-cp310-cp310-linux_x86_64.whl numpy==1.23.5 s3fs
   - export PATH=$PATH:/home/$USER/.local/bin
     # Note: if you're developing Ray, you probably want to create a Docker image that
     # has your Ray repo pre-cloned. Then, you can replace the pip installs
@@ -161,7 +161,8 @@ setup_commands:
     # - pip install -U "ray[default] @ https://s3-us-west-2.amazonaws.com/ray-wheels/latest/ray-3.0.0.dev0-cp37-cp37m-manylinux2014_x86_64.whl"
 
 # Custom commands that will be run on the head node after common setup.
-head_setup_commands: []
+head_setup_commands:
+  - pip3 install scikit-learn
 
 # Custom commands that will be run on worker nodes after common setup.
 worker_setup_commands: []

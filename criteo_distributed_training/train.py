@@ -122,6 +122,35 @@ def ray_cluster_config(communication_type="gloo"):
     return cluster_config
 
 
+def down_s3_data_callback(data_loader):
+    import urllib.request
+
+    s3_file_address = data_loader.train_file
+
+    # Remove the "s3://" prefix
+    trimmed_address = s3_file_address.replace("s3://", "")
+
+    # Split the trimmed address into bucket name and object key
+    split_address = trimmed_address.split("/", 1)
+    object_key = split_address[1]
+
+    s3_bucket_url = f"https://thirdai-corp-public.s3.us-east-2.amazonaws.com"
+    local_file_path = (
+        "/home/ubuntu/train_file"  # The path where you want to save the downloaded file
+    )
+
+    file_url = f"{s3_bucket_url}/{object_key}"
+
+    print(file_url)
+    try:
+        urllib.request.urlretrieve(file_url, local_file_path)
+        print(f"File downloaded successfully: {local_file_path}")
+
+        data_loader.train_file = local_file_path
+    except urllib.error.URLError as e:
+        raise RuntimeError("Error occurred during download:", e)
+
+
 data_types = {
     f"numeric_{i}": bolt.types.numerical(range=(0, 1500)) for i in range(1, 14)
 }
@@ -141,16 +170,12 @@ import time
 st = time.time()
 tabular_model.train_distributed(
     cluster_config=ray_cluster_config(),
-    filenames=[
-        f"s3://thirdai-corp-public/criteo_splitted_12/train_file{file_id}.txt"
-        if file_id >= 10
-        else f"s3://thirdai-corp-public/criteo_splitted_12/train_file0{file_id}.txt"
-        for file_id in range(NUM_NODES)
-    ],
+    filenames=["/home/ubuntu/train_file" for _ in range(NUM_NODES)],
     epochs=args.epochs,
     learning_rate=args.learning_rate,
     batch_size=args.batch_size,
     max_in_memory_batches=args.max_in_memory_batches,
+    training_data_loader_callback=down_s3_data_callback,
 )
 en = time.time()
 print("Training Time:", en - st)
