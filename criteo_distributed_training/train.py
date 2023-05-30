@@ -1,10 +1,10 @@
 import argparse
-from thirdai import bolt, licensing
+from thirdai import bolt#, licensing
 import numpy as np
 from sklearn.metrics import roc_auc_score
 import thirdai.distributed_bolt as d_bolt
 
-licensing.activate("<YOUR LICENSE KEY HERE>")
+# licensing.activate("<YOUR LICENSE KEY HERE>")
 
 
 def cpus_per_node_type(value):

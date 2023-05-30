@@ -1,5 +1,1 @@
 ray[all]
-thirdai
-aws==1.16.312
-numpy==1.23.5
-#gloo			# need to have a wheel for ubuntu version on EC2 instance
