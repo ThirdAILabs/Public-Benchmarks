@@ -1,20 +1,20 @@
 import argparse
-from thirdai import bolt#, licensing
+from thirdai import bolt, licensing
 import numpy as np
 from sklearn.metrics import roc_auc_score
 import thirdai.distributed_bolt as d_bolt
 
-# licensing.activate("<YOUR LICENSE KEY HERE>")
+licensing.activate("<YOUR LICENSE KEY HERE>")
 
 
 def cpus_per_node_type(value):
     # 2 is there just for testing purpose, as we might not want to start whole cluster
     valid_values = [2, 12, 24, 48]
-    if value not in valid_values:
+    if int(value) not in valid_values:
         raise argparse.ArgumentTypeError(
             f"Invalid value for cpus_per_node: {value}. Valid values are {valid_values}"
         )
-    return value
+    return int(value)
 
 
 def parse_args():
