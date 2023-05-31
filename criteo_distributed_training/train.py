@@ -3,6 +3,7 @@ from thirdai import bolt, licensing
 import numpy as np
 from sklearn.metrics import roc_auc_score
 import thirdai.distributed_bolt as d_bolt
+import os
 
 licensing.activate("<YOUR LICENSE KEY HERE>")
 
@@ -74,7 +75,7 @@ def parse_args():
     parser.add_argument(
         "--max_in_memory_batches",
         type=int,
-        default=50,
+        default=3,
         metavar="N",
         help="Maximum number of in-memory batches (default: 100)",
     )
@@ -125,9 +126,17 @@ def ray_cluster_config(communication_type="gloo"):
     return cluster_config
 
 
-def down_s3_data_callback(data_loader):
+def download_data_from_s3(file_url, local_file_path):
     import urllib.request
 
+    try:
+        urllib.request.urlretrieve(file_url, local_file_path)
+        print(f"File downloaded successfully: {local_file_path}")
+    except urllib.error.URLError as e:
+        raise RuntimeError("Error occurred during download:", e)
+
+
+def down_s3_data_callback(data_loader):
     s3_file_address = data_loader.train_file
 
     # Remove the "s3://" prefix
@@ -143,15 +152,8 @@ def down_s3_data_callback(data_loader):
     )
 
     file_url = f"{s3_bucket_url}/{object_key}"
-
-    print(file_url)
-    try:
-        urllib.request.urlretrieve(file_url, local_file_path)
-        print(f"File downloaded successfully: {local_file_path}")
-
-        data_loader.train_file = local_file_path
-    except urllib.error.URLError as e:
-        raise RuntimeError("Error occurred during download:", e)
+    download_data_from_s3(file_url, local_file_path)
+    data_loader.train_file = local_file_path
 
 
 training_data_folder = "criteo_splitted_12"
@@ -201,18 +203,21 @@ tabular_model.save(filename="udt_click_prediction.model")
 
 # This part of code is memory/CPU intensive as we would be loading the whole test data(10 GB) for evaluation.
 # If the head machine doesn't have enough memory and RAM. It is recommended to run it on a separate machine.
-
 tabular_model = bolt.UniversalDeepTransformer.load(
     filename="udt_click_prediction.model"
 )
 
+# TODO(pratik): Add file reading from s3 back once, we solve this issue(https://github.com/ThirdAILabs/Universe/issues/1487)
+local_test_data = os.path.join(os.path.expanduser("~user"), "test_file")
+download_data_from_s3(args.test_file, local_test_data)
+
 
 activations = tabular_model.evaluate(
-    filename=args.test_file, metrics=["categorical_accuracy"]
+    filename=local_test_data, metrics=["categorical_accuracy"]
 )
 
 true_labels = np.zeros(activations.shape[0], dtype=np.float32)
-with open(args.test_file) as f:
+with open(local_test_data) as f:
     header = f.readline()
     count = 0
     for line in f:
