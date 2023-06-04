@@ -156,11 +156,14 @@ def down_s3_data_callback(data_loader):
     data_loader.train_file = local_file_path
 
 
-training_data_folder = "criteo_splitted_12"
-if args.num_nodes == 2 or args.num_nodes == 48:
-    training_data_folder = "criteo_splitted_48"
+training_data_folder = "criteo-split-48"
+if args.num_nodes == 2 or args.num_nodes == 12:
+    training_data_folder = "criteo-split-12"
+    # For mitigating memory issues, due to bigger batch size, doesn't affect the 
+    # numbers much
+    args.batch_size = args.batch_size // 2
 if args.num_nodes == 24:
-    training_data_folder = "criteo_splitted_24"
+    training_data_folder = "criteo-split-24"
 
 
 data_types = {

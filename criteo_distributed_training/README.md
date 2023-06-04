@@ -40,14 +40,15 @@ However, if you need to re-preprocess the data from scratch, follow these instru
 
 ## Training Setup
 
-Initialize a Ray Cluster using `autoscalar_aws.yml`. Read [here](https://docs.ray.io/en/latest/cluster/vms/user-guides/launching-clusters/aws.html) about how to setup a ray-cluster on aws using an yaml file. That yaml file should also install the required libraries on all on the machine.
+The first step to launch a distributed training job is to initialize a Ray Cluster using the autoscalar_aws.yml config file. Please refer to the official [Ray documentation](https://docs.ray.io/en/latest/cluster/vms/user-guides/launching-clusters/aws.html) for details on how to set up a Ray Cluster on AWS via a yaml config. This yaml file will also install the required software libraries on all of the machines.
 
 
 ## Training
 
 To begin the training, follow these steps:
 
-1. Once cluster setup is done, ssh to the head node using ssh-command mentioned under `Get a remote shell to the cluster manually` under `Useful commands`. After ssh-ing into the head-node, clone [Public-Benchmark](https://github.com/ThirdAILabs/Public-Benchmarks) repo.
+1. Once cluster setup is done, ssh to the head node using ssh-command mentioned under `Get a remote shell to the cluster manually` under `Useful commands`. After ssh-ing into the head-node, run  `git clone https://github.com/ThirdAILabs/Public-Benchmarks.git` 
+to  clone [Public-Benchmark](https://github.com/ThirdAILabs/Public-Benchmarks) repo.
 2. Then, under `criteo_distributed_training` either use `run.sh` to run all of the demo at once, or use train.py as below to run the experiments one-by-one.
 
 
