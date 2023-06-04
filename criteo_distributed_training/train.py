@@ -75,7 +75,7 @@ def parse_args():
     parser.add_argument(
         "--max_in_memory_batches",
         type=int,
-        default=3,
+        default=10,
         metavar="N",
         help="Maximum number of in-memory batches (default: 100)",
     )
@@ -159,9 +159,6 @@ def down_s3_data_callback(data_loader):
 training_data_folder = "criteo-split-48"
 if args.num_nodes == 2 or args.num_nodes == 12:
     training_data_folder = "criteo-split-12"
-    # For mitigating memory issues, due to bigger batch size, doesn't affect the 
-    # numbers much
-    args.batch_size = args.batch_size // 2
 if args.num_nodes == 24:
     training_data_folder = "criteo-split-24"
 
