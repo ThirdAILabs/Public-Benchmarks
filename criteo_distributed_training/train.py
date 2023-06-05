@@ -208,7 +208,7 @@ tabular_model = bolt.UniversalDeepTransformer.load(
 )
 
 # TODO(pratik): Add file reading from s3 back once, we solve this issue(https://github.com/ThirdAILabs/Universe/issues/1487)
-local_test_data = os.path.join(os.path.expanduser("~user"), "test_file")
+local_test_data = "/home/ubuntu/test_file"
 download_data_from_s3(args.test_file, local_test_data)
 
 
