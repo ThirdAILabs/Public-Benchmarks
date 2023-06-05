@@ -77,7 +77,7 @@ def parse_args():
         type=int,
         default=10,
         metavar="N",
-        help="Maximum number of in-memory batches (default: 100)",
+        help="Maximum number of in-memory batches (default: 10)",
     )
     args = parser.parse_args()
     return args
