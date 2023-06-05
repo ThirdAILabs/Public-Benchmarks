@@ -126,7 +126,17 @@ def ray_cluster_config(communication_type="gloo"):
     return cluster_config
 
 
-def download_data_from_s3(file_url, local_file_path):
+def download_data_from_s3(s3_file_address, local_file_path):
+    # Remove the "s3://" prefix
+    trimmed_address = s3_file_address.replace("s3://", "")
+
+    # Split the trimmed address into bucket name and object key
+    split_address = trimmed_address.split("/", 1)
+    object_key = split_address[1]
+
+    s3_bucket_url = f"https://thirdai-corp-public.s3.us-east-2.amazonaws.com"
+
+    file_url = f"{s3_bucket_url}/{object_key}"
     import urllib.request
 
     try:
@@ -138,21 +148,11 @@ def download_data_from_s3(file_url, local_file_path):
 
 def down_s3_data_callback(data_loader):
     s3_file_address = data_loader.train_file
-
-    # Remove the "s3://" prefix
-    trimmed_address = s3_file_address.replace("s3://", "")
-
-    # Split the trimmed address into bucket name and object key
-    split_address = trimmed_address.split("/", 1)
-    object_key = split_address[1]
-
-    s3_bucket_url = f"https://thirdai-corp-public.s3.us-east-2.amazonaws.com"
     local_file_path = (
         "/home/ubuntu/train_file"  # The path where you want to save the downloaded file
     )
 
-    file_url = f"{s3_bucket_url}/{object_key}"
-    download_data_from_s3(file_url, local_file_path)
+    download_data_from_s3(s3_file_address, local_file_path)
     data_loader.train_file = local_file_path
 
 
