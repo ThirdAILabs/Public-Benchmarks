@@ -1,11 +1,20 @@
 import argparse
 from thirdai import bolt, licensing
-import os
 import numpy as np
 from sklearn.metrics import roc_auc_score
 import thirdai.distributed_bolt as d_bolt
 
 licensing.activate("<YOUR LICENSE KEY HERE>")
+
+
+def cpus_per_node_type(value):
+    # 2 is here for testing purpose, as we might not want to start whole cluster
+    valid_values = [2, 12, 24, 48]
+    if int(value) not in valid_values:
+        raise argparse.ArgumentTypeError(
+            f"Invalid value for cpus_per_node: {value}. Valid values are {valid_values}"
+        )
+    return int(value)
 
 
 def parse_args():
@@ -21,10 +30,11 @@ def parse_args():
     )
     parser.add_argument(
         "--num_nodes",
-        type=int,
+        type=cpus_per_node_type,
         required=True,
+        default=12,
         metavar="N",
-        help="Number of nodes to use for distributed training of the UDT model",
+        help="Number of CPUs allocated per node for the distributed training. Valid values: 2, 12, 24, 48 (default: 12)",
     )
     parser.add_argument(
         "--cpus_per_node",
@@ -32,20 +42,6 @@ def parse_args():
         default=4,
         metavar="N",
         help="Number of CPUs allocated per node for the distributed training (default: 4)",
-    )
-    parser.add_argument(
-        "--test_file",
-        type=str,
-        required=True,
-        metavar="FILE",
-        help="Path to the test file",
-    )
-    parser.add_argument(
-        "--training_folder",
-        type=str,
-        required=True,
-        metavar="FOLDER",
-        help="Path to the folder containing training files with integer names (0 to num_nodes-1)",
     )
     parser.add_argument(
         "--epochs",
@@ -71,9 +67,9 @@ def parse_args():
     parser.add_argument(
         "--max_in_memory_batches",
         type=int,
-        default=100,
+        default=3,
         metavar="N",
-        help="Maximum number of in-memory batches (default: 100)",
+        help="Maximum number of in-memory batches (default: 10)",
     )
     args = parser.parse_args()
     return args
@@ -122,6 +118,44 @@ def ray_cluster_config(communication_type="gloo"):
     return cluster_config
 
 
+def download_data_from_s3(s3_file_address, local_file_path):
+    # Remove the "s3://" prefix
+    trimmed_address = s3_file_address.replace("s3://", "")
+
+    # Split the trimmed address into bucket name and object key
+    split_address = trimmed_address.split("/", 1)
+    object_key = split_address[1]
+
+    s3_bucket_url = f"https://thirdai-corp-public.s3.us-east-2.amazonaws.com"
+
+    file_url = f"{s3_bucket_url}/{object_key}"
+    import urllib.request
+
+    try:
+        urllib.request.urlretrieve(file_url, local_file_path)
+        print(f"File downloaded successfully: {local_file_path}")
+    except urllib.error.URLError as e:
+        raise RuntimeError("Error occurred during download:", e)
+
+
+# TODO(pratik): Add file reading from s3 back once, we solve this issue(https://github.com/ThirdAILabs/Universe/issues/1487
+def down_s3_data_callback(data_loader):
+    s3_file_address = data_loader.train_file
+    local_file_path = (
+        "/home/ubuntu/train_file"  # The path where you want to save the downloaded file
+    )
+
+    download_data_from_s3(s3_file_address, local_file_path)
+    data_loader.train_file = local_file_path
+
+
+training_data_folder = "criteo-split-48"
+if args.num_nodes == 2 or args.num_nodes == 12:
+    training_data_folder = "criteo-split-12"
+if args.num_nodes == 24:
+    training_data_folder = "criteo-split-24"
+
+
 data_types = {
     f"numeric_{i}": bolt.types.numerical(range=(0, 1500)) for i in range(1, 14)
 }
@@ -138,19 +172,21 @@ tabular_model = bolt.UniversalDeepTransformer(
 
 import time
 
+
 st = time.time()
 tabular_model.train_distributed(
     cluster_config=ray_cluster_config(),
     filenames=[
-        os.path.join(args.training_folder, f"train_file{file_id}.txt")
+        f"s3://thirdai-corp-public/{training_data_folder}/train_file{file_id}.txt"
         if file_id >= 10
-        else os.path.join(args.training_folder, f"train_file0{file_id}.txt")
+        else f"s3://thirdai-corp-public/{training_data_folder}/train_file0{file_id}.txt"
         for file_id in range(NUM_NODES)
     ],
     epochs=args.epochs,
     learning_rate=args.learning_rate,
     batch_size=args.batch_size,
     max_in_memory_batches=args.max_in_memory_batches,
+    training_data_loader_callback=down_s3_data_callback,
 )
 en = time.time()
 print("Training Time:", en - st)
@@ -158,26 +194,45 @@ print("Training Time:", en - st)
 tabular_model.save(filename="udt_click_prediction.model")
 
 
-# This part of code is memory/CPU intensive as we would be loading the whole test data(10 GB) for evaluation.
+# This part of code is memory/CPU intensive as we would be loading the whole test data(11 GB) for evaluation.
 # If the head machine doesn't have enough memory and RAM. It is recommended to run it on a separate machine.
-
 tabular_model = bolt.UniversalDeepTransformer.load(
     filename="udt_click_prediction.model"
 )
 
+# TODO(pratik): Add file reading from s3 back once, we solve this issue(https://github.com/ThirdAILabs/Universe/issues/1487)
+local_test_data = "/home/ubuntu/test_file"
+download_data_from_s3("s3://thirdai-corp-public/test.txt", local_test_data)
 
-activations = tabular_model.evaluate(
-    filename=args.test_file, metrics=["categorical_accuracy"]
-)
 
-true_labels = np.zeros(activations.shape[0], dtype=np.float32)
-with open(args.test_file) as f:
+from itertools import islice
+
+chunk_size = 1000000
+true_labels = []
+activations = []
+
+# define datatypes
+data_type_dict = [f"numeric_{i}" for i in range(1, 14)]
+data_type_dict.extend([f"cat_{i}" for i in range(1, 27)])
+
+with open(local_test_data) as f:
     header = f.readline()
-    count = 0
-    for line in f:
-        true_labels[count] = np.float32(line.split(",")[0])
-        count += 1
 
+    while True:
+        test_sample_batch = []
+        next_n_lines = list(islice(f, chunk_size))
+        if not next_n_lines:
+            break
+        for line in next_n_lines:
+            true_labels.append(np.float32(line.split(",")[0]))
+            test_sample_batch.append(
+                dict(zip(data_type_dict, line.strip().split(",")[1:]))
+            )
+
+        activations.extend(tabular_model.predict_batch(test_sample_batch))
+
+true_labels = np.array(true_labels)
+activations = np.array(activations)
 roc_auc = roc_auc_score(true_labels, activations[:, 1])
 
 print("ROC_AUC:", roc_auc)
