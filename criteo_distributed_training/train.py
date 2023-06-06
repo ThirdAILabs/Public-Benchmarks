@@ -3,13 +3,12 @@ from thirdai import bolt, licensing
 import numpy as np
 from sklearn.metrics import roc_auc_score
 import thirdai.distributed_bolt as d_bolt
-import os
 
 licensing.activate("<YOUR LICENSE KEY HERE>")
 
 
 def cpus_per_node_type(value):
-    # 2 is there just for testing purpose, as we might not want to start whole cluster
+    # 2 is here for testing purpose, as we might not want to start whole cluster
     valid_values = [2, 12, 24, 48]
     if int(value) not in valid_values:
         raise argparse.ArgumentTypeError(
@@ -52,13 +51,6 @@ def parse_args():
         help="Number of epochs to train the model (default: 1)",
     )
     parser.add_argument(
-        "--test_file",
-        type=str,
-        default="s3://thirdai-corp-public/test.txt",
-        metavar="FILE",
-        help="Path to the test file",
-    )
-    parser.add_argument(
         "--learning_rate",
         type=float,
         default=0.005,
@@ -75,7 +67,7 @@ def parse_args():
     parser.add_argument(
         "--max_in_memory_batches",
         type=int,
-        default=10,
+        default=3,
         metavar="N",
         help="Maximum number of in-memory batches (default: 10)",
     )
@@ -146,6 +138,7 @@ def download_data_from_s3(s3_file_address, local_file_path):
         raise RuntimeError("Error occurred during download:", e)
 
 
+# TODO(pratik): Add file reading from s3 back once, we solve this issue(https://github.com/ThirdAILabs/Universe/issues/1487
 def down_s3_data_callback(data_loader):
     s3_file_address = data_loader.train_file
     local_file_path = (
@@ -209,7 +202,7 @@ tabular_model = bolt.UniversalDeepTransformer.load(
 
 # TODO(pratik): Add file reading from s3 back once, we solve this issue(https://github.com/ThirdAILabs/Universe/issues/1487)
 local_test_data = "/home/ubuntu/test_file"
-download_data_from_s3(args.test_file, local_test_data)
+download_data_from_s3("s3://thirdai-corp-public/test.txt", local_test_data)
 
 
 from itertools import islice
@@ -217,6 +210,8 @@ from itertools import islice
 chunk_size = 1000000
 true_labels = []
 activations = []
+data_type_dict = [f"numeric_{i}" for i in range(1, 14)]
+data_type_dict.extend([f"cat_{i}" for i in range(1, 27)])
 
 with open(local_test_data) as f:
     header = f.readline()
@@ -228,10 +223,14 @@ with open(local_test_data) as f:
             break
         for line in next_n_lines:
             true_labels.append(np.float32(line.split(",")[0]))
-            test_sample_batch.append(dict(zip(data_types, line.strip().split(",")[1:])))
+            test_sample_batch.append(
+                dict(zip(data_type_dict, line.strip().split(",")[1:]))
+            )
 
         activations.extend(tabular_model.predict_batch(test_sample_batch))
 
+true_labels = np.array(true_labels)
+activations = np.array(activations)
 roc_auc = roc_auc_score(true_labels, activations[:, 1])
 
 print("ROC_AUC:", roc_auc)
