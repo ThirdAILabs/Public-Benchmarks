@@ -212,17 +212,25 @@ local_test_data = "/home/ubuntu/test_file"
 download_data_from_s3(args.test_file, local_test_data)
 
 
-activations = tabular_model.evaluate(
-    filename=local_test_data, metrics=["categorical_accuracy"]
-)
+from itertools import islice
 
-true_labels = np.zeros(activations.shape[0], dtype=np.float32)
+chunk_size = 1000000
+true_labels = []
+activations = []
+
 with open(local_test_data) as f:
     header = f.readline()
-    count = 0
-    for line in f:
-        true_labels[count] = np.float32(line.split(",")[0])
-        count += 1
+
+    while True:
+        test_sample_batch = []
+        next_n_lines = list(islice(f, chunk_size))
+        if not next_n_lines:
+            break
+        for line in next_n_lines:
+            true_labels.append(np.float32(line.split(",")[0]))
+            test_sample_batch.append(dict(zip(data_types, line.strip().split(",")[1:])))
+
+        activations.extend(tabular_model.predict_batch(test_sample_batch))
 
 roc_auc = roc_auc_score(true_labels, activations[:, 1])
 
