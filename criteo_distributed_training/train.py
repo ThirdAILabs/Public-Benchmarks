@@ -194,7 +194,7 @@ print("Training Time:", en - st)
 tabular_model.save(filename="udt_click_prediction.model")
 
 
-# This part of code is memory/CPU intensive as we would be loading the whole test data(10 GB) for evaluation.
+# This part of code is memory/CPU intensive as we would be loading the whole test data(11 GB) for evaluation.
 # If the head machine doesn't have enough memory and RAM. It is recommended to run it on a separate machine.
 tabular_model = bolt.UniversalDeepTransformer.load(
     filename="udt_click_prediction.model"
@@ -210,6 +210,8 @@ from itertools import islice
 chunk_size = 1000000
 true_labels = []
 activations = []
+
+# define datatypes
 data_type_dict = [f"numeric_{i}" for i in range(1, 14)]
 data_type_dict.extend([f"cat_{i}" for i in range(1, 27)])
 
