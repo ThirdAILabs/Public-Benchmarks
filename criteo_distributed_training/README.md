@@ -47,9 +47,8 @@ The first step to launch a distributed training job is to initialize a Ray Clust
 
 To begin the training, follow these steps:
 
-1. Once cluster setup is done, ssh to the head node using ssh-command mentioned under `Get a remote shell to the cluster manually` under `Useful commands`. After ssh-ing into the head-node, run  `git clone https://github.com/ThirdAILabs/Public-Benchmarks.git` 
-to  clone [Public-Benchmark](https://github.com/ThirdAILabs/Public-Benchmarks) repo.
-2. Then, under `criteo_distributed_training` either use `run.sh` to run all of the demo at once, or use train.py as below to run the experiments one-by-one.
+1. Once cluster setup is done, ssh to the head node using ssh-command mentioned under `Get a remote shell to the cluster manually` under `Useful commands`. After ssh-ing into the head-node. 
+2. Then, move `~/Public-Benchmarks/criteo_distributed_training` either use `run.sh` to run all of the demo at once, or use train.py to run the experiments one-by-one.
 
 
 ## Evaluation
