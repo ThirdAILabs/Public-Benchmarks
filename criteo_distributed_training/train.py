@@ -39,7 +39,7 @@ def parse_args():
         "--num_nodes",
         type=cpus_per_node_type,
         required=True,
-        default=12,
+        default=2,
         metavar="N",
         help="Number of CPUs allocated per node for the distributed training. Valid values: 2, 12, 24, 48 (default: 12)",
     )
@@ -156,11 +156,13 @@ def down_s3_data_callback(data_loader):
     data_loader.train_file = local_file_path
 
 
-training_data_folder = "criteo-split-48"
-if args.num_nodes == 2 or args.num_nodes == 12:
+training_data_folder = "criteo-sample-split"
+if args.num_nodes == 12:
     training_data_folder = "criteo-split-12"
 if args.num_nodes == 24:
     training_data_folder = "criteo-split-24"
+if args.num_nodes == 48:
+    training_data_folder = "criteo-split-48"
 
 
 data_types = {
