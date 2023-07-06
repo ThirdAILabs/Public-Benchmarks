@@ -209,39 +209,44 @@ tabular_model = bolt.UniversalDeepTransformer.load(
     filename="udt_click_prediction.model"
 )
 
-# TODO(pratik): Add file reading from s3 back once, we solve this issue(https://github.com/ThirdAILabs/Universe/issues/1487)
-local_test_data = "/home/ubuntu/test_file"
-download_data_from_s3("s3://thirdai-corp-public/test.txt", local_test_data)
+# Skip test for sample-training
+if args.num_nodes == 2:
+    print(
+        "The demonstration run has been successfully completed. You may now proceed with the execution to complete the training process."
+    )
+else:
+    # TODO(pratik): Add file reading from s3 back once, we solve this issue(https://github.com/ThirdAILabs/Universe/issues/1487)
+    local_test_data = "/home/ubuntu/test_file"
+    download_data_from_s3("s3://thirdai-corp-public/test.txt", local_test_data)
 
+    from itertools import islice
 
-from itertools import islice
+    chunk_size = 1000000
+    true_labels = []
+    activations = []
 
-chunk_size = 1000000
-true_labels = []
-activations = []
+    # define datatypes
+    data_type_dict = [f"numeric_{i}" for i in range(1, 14)]
+    data_type_dict.extend([f"cat_{i}" for i in range(1, 27)])
 
-# define datatypes
-data_type_dict = [f"numeric_{i}" for i in range(1, 14)]
-data_type_dict.extend([f"cat_{i}" for i in range(1, 27)])
+    with open(local_test_data) as f:
+        header = f.readline()
 
-with open(local_test_data) as f:
-    header = f.readline()
+        while True:
+            test_sample_batch = []
+            next_n_lines = list(islice(f, chunk_size))
+            if not next_n_lines:
+                break
+            for line in next_n_lines:
+                true_labels.append(np.float32(line.split(",")[0]))
+                test_sample_batch.append(
+                    dict(zip(data_type_dict, line.strip().split(",")[1:]))
+                )
 
-    while True:
-        test_sample_batch = []
-        next_n_lines = list(islice(f, chunk_size))
-        if not next_n_lines:
-            break
-        for line in next_n_lines:
-            true_labels.append(np.float32(line.split(",")[0]))
-            test_sample_batch.append(
-                dict(zip(data_type_dict, line.strip().split(",")[1:]))
-            )
+            activations.extend(tabular_model.predict_batch(test_sample_batch))
 
-        activations.extend(tabular_model.predict_batch(test_sample_batch))
+    true_labels = np.array(true_labels)
+    activations = np.array(activations)
+    roc_auc = roc_auc_score(true_labels, activations[:, 1])
 
-true_labels = np.array(true_labels)
-activations = np.array(activations)
-roc_auc = roc_auc_score(true_labels, activations[:, 1])
-
-print("ROC_AUC:", roc_auc)
+    print("ROC_AUC:", roc_auc)
