@@ -166,6 +166,7 @@ setup_commands:
 # Custom commands that will be run on the head node after common setup.
 head_setup_commands:
   - pip3 install scikit-learn
+  - git clone https://github.com/ThirdAILabs/Public-Benchmarks.git
 
 # Custom commands that will be run on worker nodes after common setup.
 worker_setup_commands: []
