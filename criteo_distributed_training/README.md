@@ -40,7 +40,41 @@ However, if you need to re-preprocess the data from scratch, follow these instru
 
 ## Training Setup
 
-The first step to launch a distributed training job is to initialize a Ray Cluster using the autoscalar_aws.yml config file. Please refer to the official [Ray documentation](https://docs.ray.io/en/latest/cluster/vms/user-guides/launching-clusters/aws.html) for details on how to set up a Ray Cluster on AWS via a yaml config. This yaml file will also install the required software libraries on all of the machines.
+The first step to launch a distributed training job is to initialize a Ray Cluster using the autoscalar_aws.yml config file. 
+### Starting Ray Cluster on AWS
+
+To set up a Ray cluster on AWS, please follow the instructions below:
+
+1. Ensure that your AWS account has been set up by your AWS administrator.
+2. Install the AWS SDK by running the following command: `pip install -U boto3`.
+3. Configure your AWS credentials by executing the command `aws configure`. Fill in the `aws_access_key_id` and `aws_secret_access_key` values provided to you via email from AWS. You may leave other fields empty for minimal use cases.
+4. Once the `boto3` setup is complete, you can run the following script to test if Ray is functioning correctly on AWS:
+
+    ```bash
+        # Download the example-full.yaml file
+        wget https://raw.githubusercontent.com/ray-project/ray/master/python/ray/autoscaler/aws/example-full.yaml
+
+        # Create or update the cluster. Once the command finishes, it will display
+        # the command that can be used to SSH into the cluster head node.
+        ray up example-full.yaml
+
+        # Access the head node via a remote shell.
+        ray attach example-full.yaml
+
+        # Try running a Ray program.
+        python -c 'import ray; ray.init()'
+        exit
+
+        # Terminate the cluster when your workload is complete.
+        ray down example-full.yaml
+    ```
+
+5. Remember to terminate the machine once your workload has finished. 
+6. Once you have completed the setup, execute the command `ray up aws_autoscaler.yaml` to start the cluster and begin running your workload.
+
+Please ensure that you follow these instructions carefully to set up and utilize a Ray cluster on AWS.
+
+Please refer to the official [Ray documentation](https://docs.ray.io/en/latest/cluster/vms/user-guides/launching-clusters/aws.html) for more details on how to set up a Ray Cluster on AWS via a yaml config. This yaml file will also install the required software libraries on all of the machines.
 
 
 ## Training
@@ -57,3 +91,6 @@ To begin the training, follow these steps:
 
 ## Evaluation
 After completing the training, the evaluation script will also run on the same node. If the node has limited resources, we recommend saving the model after training and running the evaluation on a separate node with more memory and RAM after loading the model.
+
+## Stop Ray Cluster
+Once the demo is done running, make sure to stop the ray cluster using `ray down aws_autoscalar.yaml`. 
