@@ -1,5 +1,6 @@
 import argparse
 import sys
+import os
 
 from thirdai import bolt, licensing
 import numpy as np
@@ -200,13 +201,19 @@ tabular_model.train_distributed(
 en = time.time()
 print("Training Time:", en - st)
 
-tabular_model.save(filename="udt_click_prediction.model")
+directory_path = "trained_models"
+if not os.path.exists(directory_path):
+    os.makedirs(directory_path)
+
+tabular_model.save(
+    filename=f"{directory_path}/udt_click_prediction_{NUM_NODES}_{embedding_dimension}.model"
+)
 
 
 # This part of code is memory/CPU intensive as we would be loading the whole test data(11 GB) for evaluation.
 # If the head machine doesn't have enough memory and RAM. It is recommended to run it on a separate machine.
 tabular_model = bolt.UniversalDeepTransformer.load(
-    filename="udt_click_prediction.model"
+    filename=f"{directory_path}/udt_click_prediction_{NUM_NODES}_{embedding_dimension}.model"
 )
 
 # Skip test for sample-training
@@ -215,6 +222,9 @@ if args.num_nodes == 2:
         "The demonstration run has been successfully completed. You may now proceed with the execution to complete the training process."
     )
 else:
+    print(
+        f"Training is complete for model with {NUM_NODES} nodes and embedding dimension as {embedding_dimension}."
+    )
     # TODO(pratik): Add file reading from s3 back once, we solve this issue(https://github.com/ThirdAILabs/Universe/issues/1487)
     local_test_data = "/home/ubuntu/test_file"
     download_data_from_s3("s3://thirdai-corp-public/test.txt", local_test_data)
