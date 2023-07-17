@@ -11,7 +11,7 @@ run_script() {
     This run ensures that we can successfully operate with a smaller training dataset. 
     To reproduce the results mentioned in the blog, 
     please execute the complete training process."
-  echo "Running with ${NUM_NODES} nodes, embedding dimension ${EMBEDDING_DIMENSION}, and ${MODEL_SIZE} model size" 2>&1 | tee log_file.txt
+  echo "Running with ${NUM_NODES} nodes, embedding dimension ${EMBEDDING_DIMENSION}, and ${MODEL_SIZE} model size" 2>&1 | tee -a log_file.txt
 
   # Execute the script with the current configuration
   python3 train.py --num_nodes "${NUM_NODES}" --embedding_dimension "${EMBEDDING_DIMENSION}"
