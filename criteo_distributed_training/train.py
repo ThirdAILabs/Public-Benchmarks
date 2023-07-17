@@ -7,10 +7,6 @@ import numpy as np
 from sklearn.metrics import roc_auc_score
 import thirdai.distributed_bolt as d_bolt
 
-# Redirects stdout to a log file
-path = "log.txt"
-sys.stdout = open(path, "w")
-
 
 licensing.activate("<YOUR LICENSE KEY HERE>")
 
