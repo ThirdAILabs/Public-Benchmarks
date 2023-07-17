@@ -72,6 +72,20 @@ To set up a Ray cluster on AWS, please follow the instructions below:
 5. Remember to terminate the machine once your workload has finished. 
 6. Once you have completed the setup, execute the command `ray up aws_autoscaler.yaml` to start the cluster and begin running your workload.
 
+Before moving to the next step, make sure the entire cluster is up before running a workload. To check whether the cluster is up, use one of the following commands:
+
+```
+ray exec <location-of-autoscaler-file-locally> 'tail -n 100 -f /tmp/ray/session_latest/logs/monitor*'
+```
+
+or
+
+```
+ray status
+```
+
+The first command is used to tail the logs and monitor the cluster's status. The second command provides a summary of the cluster's status on the head node.
+
 Please ensure that you follow these instructions carefully to set up and utilize a Ray cluster on AWS.
 
 Please refer to the official [Ray documentation](https://docs.ray.io/en/latest/cluster/vms/user-guides/launching-clusters/aws.html) for more details on how to set up a Ray Cluster on AWS via a yaml config. This yaml file will also install the required software libraries on all of the machines.
