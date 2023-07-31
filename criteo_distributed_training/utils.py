@@ -65,7 +65,7 @@ def parse_args():
     parser.add_argument(
         "--max_in_memory_batches",
         type=int,
-        default=3,
+        default=10,
         metavar="N",
         help="Maximum number of in-memory batches (default: 10)",
     )

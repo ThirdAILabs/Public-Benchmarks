@@ -9,6 +9,7 @@ import ray
 from ray.air import session
 from ray.train.torch import TorchConfig
 
+import thirdai
 from thirdai import bolt, licensing
 import thirdai.distributed_bolt as dist
 from utils import parse_args, setup_ray, get_udt_model, download_data_from_s3
@@ -42,6 +43,8 @@ if NUM_NODES == 48:
 
 
 def train_loop_per_worker(config):
+    thirdai.logging.setup(log_to_stderr=False, path="log.txt", level="info")
+
     model = get_udt_model(embedding_dimension=EMBEDDING_DIM)
     model = dist.prepare_model(model)
 
