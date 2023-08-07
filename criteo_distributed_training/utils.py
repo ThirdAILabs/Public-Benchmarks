@@ -65,7 +65,7 @@ def parse_args():
     parser.add_argument(
         "--max_in_memory_batches",
         type=int,
-        default=10,
+        default=3,
         metavar="N",
         help="Maximum number of in-memory batches (default: 10)",
     )
@@ -81,15 +81,16 @@ def setup_ray(num_nodes=2, cpus_per_node=4):
             "working_dir": working_dir,
             "env_vars": {
                 "OMP_NUM_THREADS": f"{cpus_per_node}",
-                "GLOO_SOCKET_IFNAME": "eno1",
+                "GLOO_SOCKET_IFNAME": "ens5",
             },
+            "excludes": ["trained_models"],
         },
         ignore_reinit_error=True,
     )
     scaling_config = ray.air.ScalingConfig(
         num_workers=num_nodes,
         use_gpu=False,
-        trainer_resources={"CPU": 4},
+        trainer_resources={"CPU": 2},
         resources_per_worker={"CPU": cpus_per_node},
         placement_strategy="SPREAD",
     )
