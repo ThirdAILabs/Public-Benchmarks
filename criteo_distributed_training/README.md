@@ -123,7 +123,7 @@ ray.worker.default:
         # By default, worker node launched from head doesn't have s3 access. 
         # Hence, we pass a custom instance-profile that grants the s3 access.
         IamInstanceProfile:
-            Arn: arn:aws:iam::199696198976:instance-profile/ray-autoscaler-v1
+            Arn: arn:aws:iam::YOUR_AWS_ACCOUNT_NUMBER:YOUR_INSTANCE_PROFILE
 ```
 
 ## Training
