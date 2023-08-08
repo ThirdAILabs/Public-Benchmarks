@@ -91,6 +91,41 @@ Please ensure that you follow these instructions carefully to set up and utilize
 Please refer to the official [Ray documentation](https://docs.ray.io/en/latest/cluster/vms/user-guides/launching-clusters/aws.html) for more details on how to set up a Ray Cluster on AWS via a yaml config. This yaml file will also install the required software libraries on all of the machines.
 
 
+## Configure Cloud Storage for Ray
+
+Starting in `Ray 2.7`, Ray AIR (Train and Tune) will require users to pass in a `cloud storage` or `NFS` path if running distributed training or tuning jobs. We have used `AWS S3` for the same. Refer to this [issue](https://github.com/ray-project/ray/issues/37177) for more information.
+- Note : You can run the code without configuring cloud storage till version `2.6.1` 
+
+```bash
+import thirdai.distributed_bolt as dist
+from ray.air.config import RunConfig
+
+run_config = RunConfig(
+    name="experiment_name",
+    storage_path="s3://bucket-name/experiment_results",
+)
+
+# Use cloud storage in Train by configuring `RunConfig(storage_path)`.
+trainer = dist.BoltTrainer(
+    ...
+    run_config=run_config
+)
+```
+
+However you need to make sure all nodes in cluster have access to `AWS S3`. Launching cluster by default passes the credentials on launching machine(your local machine) to `head node` but `worker machines` launched from `head node` do not have those access. Refer to this [issue](https://github.com/ray-project/ray/issues/18186) for more information.
+
+To solve the issue, pass a custom `aws instance-profile`(which has `S3` access) to the `worker node-config`.
+```bash
+ray.worker.default:
+    node_config:
+        InstanceType: c5.12xlarge
+        ImageId: ami-02f3416038bdb17fb # Deep Learning AMI (Ubuntu) Version 30
+        # By default, worker node launched from head doesn't have s3 access. 
+        # Hence, we pass a custom instance-profile that grants the s3 access.
+        IamInstanceProfile:
+            Arn: arn:aws:iam::199696198976:instance-profile/ray-autoscaler-v1
+```
+
 ## Training
 
 To begin the training, follow these steps:

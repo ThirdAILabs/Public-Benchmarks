@@ -90,7 +90,7 @@ def setup_ray(num_nodes=2, cpus_per_node=4):
     scaling_config = ray.air.ScalingConfig(
         num_workers=num_nodes,
         use_gpu=False,
-        trainer_resources={"CPU": 16},
+        trainer_resources={"CPU": 24},
         resources_per_worker={"CPU": cpus_per_node},
         placement_strategy="PACK",
     )
@@ -115,6 +115,8 @@ def get_udt_model(embedding_dimension=256):
     return model
 
 
+# Streaming data from s3 in distrbuted training is slow. (Issue: https://github.com/ThirdAILabs/Universe/issues/1487)
+# Hence we download train and test files.
 def download_data_from_s3(s3_file_address, local_file_path):
     # Remove the "s3://" prefix
     trimmed_address = s3_file_address.replace("s3://", "")

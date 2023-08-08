@@ -12,9 +12,8 @@ run_script() {
   # Execute the script with the current configuration
   python3 train.py --num_nodes "${NUM_NODES}" --embedding_dimension "${EMBEDDING_DIMENSION}" 2>&1 | tee -a log_file.txt
 
-  # Clearing previous training results to free disk space for next iteration
-  # If you want to use the trained model, you can save it somewhere else or find it on s3 storage specified in Ray Runtime.
-  rm -rf ~/ray_results train* test*
+  # Clearing previous training files to free disk space for next iteration
+  rm -rf ~/ray_results
 }
 
 # Run the script for specific configurations

@@ -41,7 +41,7 @@ provider:
     # Availability zone(s), comma-separated, that nodes may be launched in.
     # Nodes will be launched in the first listed availability zone and will
     # be tried in the subsequent availability zones if launching fails.
-    availability_zone: us-east-2a,us-east-2a
+    availability_zone: us-east-2c,us-east-2c
     # Whether to allow node reuse. If set to False, nodes will be terminated
     # instead of stopped.
     cache_stopped_nodes: False # If not present, the default is True.
@@ -52,7 +52,7 @@ auth:
 # By default Ray creates a new private keypair, but you can also use your own.
 # If you do so, make sure to also set "KeyName" in the head and worker node
 # configurations below.
-    # ssh_private_key: /home/mritunjay/MyEC2KeyPair.pem
+    # ssh_private_key: /path/to/private/key.pem
 
 # Tell the autoscaler the allowed node types and the resources they provide.
 # The key is the name of the node type, which is just for debugging purposes.
@@ -71,14 +71,13 @@ available_node_types:
         # http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
         node_config:
             #[Public-Benchmark] If you want to run evaluation locally, you can use c5.2xlarge and comment out the eval code
-            InstanceType: c5ad.16xlarge
+            InstanceType: c5.18xlarge
             ImageId: ami-02f3416038bdb17fb # Deep Learning AMI (Ubuntu) Version 30
             # You can provision additional disk space with a conf as follows
             BlockDeviceMappings:
                 - DeviceName: /dev/sda1
                   Ebs:
                       VolumeSize: 200
-            # KeyName: MyEC2KeyPair
             
             # Additional options in the boto docs.
     ray.worker.default:
@@ -99,13 +98,14 @@ available_node_types:
         # For more documentation on available fields, see:
         # http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
         node_config:
-            InstanceType: c5ad.12xlarge
+            InstanceType: c5.12xlarge
             ImageId: ami-02f3416038bdb17fb # Deep Learning AMI (Ubuntu) Version 30
             BlockDeviceMappings:
                 - DeviceName: /dev/sda1
                   Ebs:
                       VolumeSize: 150
-            # KeyName: MyEC2KeyPair
+            # By default, worker node launched from head doesn't have s3 access. Hence, we pass a custom instance-profile that grants the s3 access.
+            # https://github.com/ray-project/ray/issues/9327
             IamInstanceProfile:
                 Arn: arn:aws:iam::199696198976:instance-profile/ray-autoscaler-v1
 
@@ -126,7 +126,7 @@ head_node_type: ray.head.default
 # Files or directories to copy to the head and worker nodes. The format is a
 # dictionary from REMOTE_PATH: LOCAL_PATH, e.g.
 file_mounts: { 
-    "/home/ubuntu/criteo_distributed_training": "/home/mritunjay/Public-Benchmarks/criteo_distributed_training"
+#    "/path/to/remote/directory": "/path/to/local/directory"
 }
 
 # Files or directories to copy from the head node to the worker nodes. The format is a
@@ -159,7 +159,7 @@ initialization_commands: []
 setup_commands: 
   - sudo apt-get update -y
   - sudo DEBIAN_FRONTEND=noninteractive -E apt install python3.10 python3-pip -y
-  - pip3 install awscli thirdai 'ray[default]' botocore boto3 pyarrow https://github.com/pratkpranav/pygloo/releases/download/0.2.0/pygloo-0.2.0-cp310-cp310-linux_x86_64.whl numpy==1.23.5 s3fs "pydantic<2" torch
+  - pip3 install awscli thirdai 'ray[default]' botocore boto3 pyarrow numpy==1.23.5 s3fs "pydantic<2" torch
   - export PATH=$PATH:/home/$USER/.local/bin
     # Note: if you're developing Ray, you probably want to create a Docker image that
     # has your Ray repo pre-cloned. Then, you can replace the pip installs
@@ -171,7 +171,7 @@ setup_commands:
 # Custom commands that will be run on the head node after common setup.
 head_setup_commands:
     - pip3 install scikit-learn
-#   - git clone https://github.com/ThirdAILabs/Public-Benchmarks.git
+    - git clone https://github.com/ThirdAILabs/Public-Benchmarks.git
 
 # Custom commands that will be run on worker nodes after common setup.
 worker_setup_commands: []
@@ -179,6 +179,7 @@ worker_setup_commands: []
 # Command to start ray on the head node. You don't need to change this.
 head_start_ray_commands:
     - ray stop
+    # Increased the heartbeat_check_interval since raylet timeouts for I/O intensive workloads.
     - ray start --head --port=6379 --object-manager-port=8076 --autoscaling-config=~/ray_bootstrap_config.yaml --system-config='{"core_worker_internal_heartbeat_ms":10000}'
 
 # Command to start ray on worker nodes. You don't need to change this.

@@ -71,6 +71,9 @@ def train_loop_per_worker(config):
 st = time.time()
 
 scaling_config = setup_ray(num_nodes=NUM_NODES, cpus_per_node=CPUS_PER_NODE)
+
+# Syncing files to the head node to be removed in Ray 2.7 in favor of cloud storage/NFS
+# Hence we use s3 storage for future compatibility. (https://docs.ray.io/en/master/tune/tutorials/tune-storage.html#configuring-tune-with-a-network-filesystem-nfs)
 run_config = RunConfig(
     name=f"criteo_node_{NUM_NODES}_dim_{EMBEDDING_DIM}",
     storage_path="s3://thirdai-ray-data/Public-Benchmarks/",
@@ -133,7 +136,7 @@ else:
     print(
         f"Training is complete for model with {NUM_NODES} nodes and embedding dimension as {EMBEDDING_DIM}."
     )
-    # TODO(pratik): Add file reading from s3 back once, we solve this issue(https://github.com/ThirdAILabs/Universe/issues/1487)
+
     local_test_data = "test_file.txt"
     download_data_from_s3("s3://thirdai-corp-public/test.txt", local_test_data)
 
