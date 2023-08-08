@@ -108,9 +108,14 @@ trained_model.save(
 data_type_dict = [f"numeric_{i}" for i in range(1, 14)]
 data_type_dict.extend([f"cat_{i}" for i in range(1, 27)])
 
+cpus_per_eval_batch = 12
 
-@ray.remote(num_cpus=12)
+
+@ray.remote(num_cpus=cpus_per_eval_batch)
 def eval_batch(filename, batch):
+    # Set `OMP_NUM_THREADS` manually for this remote function
+    os.environ["OMP_NUM_THREADS"] = f"{cpus_per_eval_batch}"
+
     licensing.deactivate()
     licensing.activate(activation_key)
 
