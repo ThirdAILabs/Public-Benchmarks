@@ -83,16 +83,16 @@ def setup_ray(num_nodes=2, cpus_per_node=4):
                 "OMP_NUM_THREADS": f"{cpus_per_node}",
                 "GLOO_SOCKET_IFNAME": "ens5",
             },
-            "excludes": ["trained_models"],
+            "excludes": ["trained_models", "test_file.txt"],
         },
         ignore_reinit_error=True,
     )
     scaling_config = ray.air.ScalingConfig(
         num_workers=num_nodes,
         use_gpu=False,
-        trainer_resources={"CPU": 2},
+        trainer_resources={"CPU": 16},
         resources_per_worker={"CPU": cpus_per_node},
-        placement_strategy="SPREAD",
+        placement_strategy="PACK",
     )
     return scaling_config
 
