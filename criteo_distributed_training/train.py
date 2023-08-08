@@ -8,6 +8,7 @@ from sklearn.metrics import roc_auc_score
 import ray
 from ray.air import session, RunConfig
 from ray.train.torch import TorchConfig
+from ray.tune import SyncConfig
 
 import thirdai
 from thirdai import bolt, licensing
@@ -77,6 +78,8 @@ scaling_config = setup_ray(num_nodes=NUM_NODES, cpus_per_node=CPUS_PER_NODE)
 run_config = RunConfig(
     name=f"criteo_node_{NUM_NODES}_dim_{EMBEDDING_DIM}",
     storage_path="s3://thirdai-ray-data/Public-Benchmarks/",
+    sync_config=SyncConfig(sync_artifacts=False),
+    sync_period=1800,
 )
 
 trainer = dist.BoltTrainer(
