@@ -15,7 +15,7 @@ from thirdai import bolt, licensing
 import thirdai.distributed_bolt as dist
 from utils import parse_args, setup_ray, get_udt_model, download_data_from_s3
 
-activation_key = "ABD96C-E130B8-802F71-AE6BE4-03B635-V3"
+activation_key = "you-activation-key-here"
 licensing.activate(activation_key)
 
 
