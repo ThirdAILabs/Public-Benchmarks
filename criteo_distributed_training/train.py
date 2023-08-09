@@ -53,7 +53,9 @@ def train_loop_per_worker(config):
     model = dist.prepare_model(model)
 
     train_file_s3 = f"s3://thirdai-corp-public/{training_data_folder}/train_file{session.get_world_rank():02}.txt"
-    train_file_local = f"train_file{session.get_world_rank():02}.txt"
+    train_file_local = os.path.join(
+        config.get("curr_dir"), f"train_file{session.get_world_rank():02}.txt"
+    )
     download_data_from_s3(
         s3_file_address=train_file_s3, local_file_path=train_file_local
     )
@@ -84,7 +86,7 @@ run_config = RunConfig(
 
 trainer = dist.BoltTrainer(
     train_loop_per_worker=train_loop_per_worker,
-    train_loop_config={},
+    train_loop_config={"curr_dir": os.getcwd()},
     scaling_config=scaling_config,
     run_config=run_config,
     backend_config=TorchConfig(backend="gloo"),

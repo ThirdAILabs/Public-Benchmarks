@@ -83,7 +83,7 @@ def setup_ray(num_nodes=2, cpus_per_node=4):
                 "OMP_NUM_THREADS": f"{cpus_per_node}",
                 "GLOO_SOCKET_IFNAME": "ens5",
             },
-            "excludes": ["trained_models", "test_file.txt"],
+            "excludes": ["trained_models", "*.txt"],
         },
         ignore_reinit_error=True,
     )
