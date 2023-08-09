@@ -12,8 +12,8 @@ run_script() {
   # Execute the script with the current configuration
   python3 train.py --num_nodes "${NUM_NODES}" --embedding_dimension "${EMBEDDING_DIMENSION}" 2>&1 | tee -a log_file.txt
 
-  # Clearing previous training files to free disk space for next iteration
-  rm -rf ~/ray_results
+  # Clearing previous train/test files to free disk space for next iteration
+  rm -rf ~/ray_results train_file* test_file*
 }
 
 # Run the script for specific configurations

@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "train.py", line 19, in <module>
+    licensing.activate(activation_key)
+AttributeError: module 'thirdai.licensing' has no attribute 'activate'
+Traceback (most recent call last):
+  File "train.py", line 19, in <module>
+    licensing.activate(activation_key)
+AttributeError: module 'thirdai.licensing' has no attribute 'activate'
+Traceback (most recent call last):
+  File "train.py", line 19, in <module>
+    licensing.activate(activation_key)
+AttributeError: module 'thirdai.licensing' has no attribute 'activate'

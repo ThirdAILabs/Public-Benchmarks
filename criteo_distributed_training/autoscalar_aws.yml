@@ -107,7 +107,7 @@ available_node_types:
             # By default, worker node launched from head doesn't have s3 access. Hence, we pass a custom instance-profile that grants the s3 access.
             # https://github.com/ray-project/ray/issues/9327
             IamInstanceProfile:
-                Arn: arn:aws:iam::YOUR_AWS_ACCOUNT_NUMBER:YOUR_INSTANCE_PROFILE
+                Arn: arn:aws:iam::199696198976:instance-profile/ray-autoscaler-v1
 
             # Run workers on spot by default. Comment this out to use on-demand.
             # NOTE: If relying on spot instances, it is best to specify multiple different instance
@@ -126,7 +126,7 @@ head_node_type: ray.head.default
 # Files or directories to copy to the head and worker nodes. The format is a
 # dictionary from REMOTE_PATH: LOCAL_PATH, e.g.
 file_mounts: { 
-#    "/path/to/remote/directory": "/path/to/local/directory"
+   "/home/ubuntu/criteo_distributed_training": "/home/mritunjay/Public-Benchmarks/criteo_distributed_training"
 }
 
 # Files or directories to copy from the head node to the worker nodes. The format is a
@@ -171,7 +171,7 @@ setup_commands:
 # Custom commands that will be run on the head node after common setup.
 head_setup_commands:
     - pip3 install scikit-learn
-    - git clone https://github.com/ThirdAILabs/Public-Benchmarks.git
+    # - git clone https://github.com/ThirdAILabs/Public-Benchmarks.git
 
 # Custom commands that will be run on worker nodes after common setup.
 worker_setup_commands: []

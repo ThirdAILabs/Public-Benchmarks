@@ -15,7 +15,7 @@ from thirdai import bolt, licensing
 import thirdai.distributed_bolt as dist
 from utils import parse_args, setup_ray, get_udt_model, download_data_from_s3
 
-activation_key = "your-thirdai-activation-key-here"
+activation_key = "ABD96C-E130B8-802F71-AE6BE4-03B635-V3"
 licensing.activate(activation_key)
 
 
@@ -80,8 +80,7 @@ scaling_config = setup_ray(num_nodes=NUM_NODES, cpus_per_node=CPUS_PER_NODE)
 run_config = RunConfig(
     name=f"criteo_node_{NUM_NODES}_dim_{EMBEDDING_DIM}",
     storage_path="s3://thirdai-ray-data/Public-Benchmarks/",
-    sync_config=SyncConfig(sync_artifacts=False),
-    sync_period=1800,
+    sync_config=SyncConfig(sync_artifacts=False, sync_period=1800),
 )
 
 trainer = dist.BoltTrainer(
@@ -96,7 +95,7 @@ result_checkpoint_and_history = trainer.fit()
 en = time.time()
 print("Training Time:", en - st)
 
-directory_path = "trained_models"
+directory_path = os.path.join(os.getcwd(), "trained_models")
 if not os.path.exists(directory_path):
     os.makedirs(directory_path)
 
@@ -113,14 +112,9 @@ trained_model.save(
 data_type_dict = [f"numeric_{i}" for i in range(1, 14)]
 data_type_dict.extend([f"cat_{i}" for i in range(1, 27)])
 
-cpus_per_eval_batch = 12
 
-
-@ray.remote(num_cpus=cpus_per_eval_batch)
+@ray.remote(num_cpus=12)
 def eval_batch(filename, batch):
-    # Set `OMP_NUM_THREADS` manually for this remote function
-    os.environ["OMP_NUM_THREADS"] = f"{cpus_per_eval_batch}"
-
     licensing.deactivate()
     licensing.activate(activation_key)
 
