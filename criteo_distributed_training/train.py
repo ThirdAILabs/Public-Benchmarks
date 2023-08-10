@@ -1,216 +1,135 @@
 import argparse
 import sys
 import os
+import time
 
-from thirdai import bolt, licensing
 import numpy as np
 from sklearn.metrics import roc_auc_score
-import thirdai.distributed_bolt as d_bolt
+import ray
+from ray.air import session, RunConfig
+from ray.train.torch import TorchConfig
+from ray.tune import SyncConfig
 
+import thirdai
+from thirdai import bolt, licensing
+import thirdai.distributed_bolt as dist
+from utils import parse_args, setup_ray, get_udt_model, download_data_from_s3
 
-licensing.activate("<YOUR LICENSE KEY HERE>")
-
-
-def cpus_per_node_type(value):
-    # 2 is here for testing purpose, as we might not want to start whole cluster
-    valid_values = [2, 12, 24, 48]
-    if int(value) not in valid_values:
-        raise argparse.ArgumentTypeError(
-            f"Invalid value for cpus_per_node: {value}. Valid values are {valid_values}"
-        )
-    return int(value)
-
-
-def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Distributed training with Ray for Universal Deep Transformer (UDT) model"
-    )
-    parser.add_argument(
-        "--embedding_dimension",
-        type=int,
-        default=256,
-        metavar="N",
-        help="Embedding dimension for the UDT model (default: 256)",
-    )
-    parser.add_argument(
-        "--num_nodes",
-        type=cpus_per_node_type,
-        required=True,
-        default=2,
-        metavar="N",
-        help="Number of CPUs allocated per node for the distributed training. Valid values: 2, 12, 24, 48 (default: 12)",
-    )
-    parser.add_argument(
-        "--cpus_per_node",
-        type=int,
-        default=4,
-        metavar="N",
-        help="Number of CPUs allocated per node for the distributed training (default: 4)",
-    )
-    parser.add_argument(
-        "--epochs",
-        type=int,
-        default=1,
-        metavar="N",
-        help="Number of epochs to train the model (default: 1)",
-    )
-    parser.add_argument(
-        "--learning_rate",
-        type=float,
-        default=0.005,
-        metavar="LR",
-        help="Learning rate for the model (default: 0.005)",
-    )
-    parser.add_argument(
-        "--batch_size",
-        type=int,
-        default=720000,
-        metavar="N",
-        help="Batch size for training (default: 720000)",
-    )
-    parser.add_argument(
-        "--max_in_memory_batches",
-        type=int,
-        default=3,
-        metavar="N",
-        help="Maximum number of in-memory batches (default: 10)",
-    )
-    args = parser.parse_args()
-    return args
+activation_key = "you-activation-key-here"
+licensing.activate(activation_key)
 
 
 args = parse_args()
+"""
+    The parameters returned by args :
+        --embedding_dimension
+        --num_nodes
+        --cpus_per_node
+        --epochs
+        --learning_rate
+        --batch_size
+        --max_in_memory_batches
+"""
 
-embedding_dimension = args.embedding_dimension
 NUM_NODES = args.num_nodes
 CPUS_PER_NODE = args.cpus_per_node
-
-
-def ray_cluster_config(communication_type="gloo"):
-    """
-    This function initalizes RayTrainingCluster Config.
-
-    RayTrainingClusterConfig:
-        Initialize the class by connecting to an existing Ray cluster or creating a new one,
-        starting Ray workers on each node, initializing logging, and creating
-        Ray primary and replica worker configs. Computes and stores a number
-        of useful fields, including num_workers, communication_type, logging,
-        primary_worker_config, and replica_worker_configs.
-
-        Args:
-            num_workers (int): The number of workers in the Ray cluster.
-            requested_cpus_per_node (int, optional): The number of requested CPUs per node. Defaults to num of cpus on the current node.
-            communication_type (str, optional): The type of communication between workers. Defaults to "circular". Use "gloo" for reproducing the results.
-            cluster_address (str, optional): The address to pass to ray.init() to connect to a cluster. Defaults to "auto".
-            runtime_env (Dict, optional): Environment variables, package dependencies, working
-                directory, and other dependencies a worker needs in its environment
-                to run. See
-                https://docs.ray.io/en/latest/ray-core/handling-dependencies.html#:~:text=A%20runtime%20environment%20describes%20the,on%20the%20cluster%20at%20runtime
-                Defaults to an empty dictionary.
-            ignore_reinit_error (bool, optional): Whether to suppress the error that a cluster
-                already exists when this method tries to create a Ray cluster. If
-                this is true and a cluster exists, this constructor will just
-                connect to that cluster. Defaults to False.
-            log_dir (str, optional): The directory where the log files will be stored. Defaults to a temporary directory.
-
-    """
-    cluster_config = d_bolt.RayTrainingClusterConfig(
-        num_workers=NUM_NODES,
-        requested_cpus_per_node=CPUS_PER_NODE,
-        communication_type=communication_type,
-    )
-    return cluster_config
-
-
-def download_data_from_s3(s3_file_address, local_file_path):
-    # Remove the "s3://" prefix
-    trimmed_address = s3_file_address.replace("s3://", "")
-
-    # Split the trimmed address into bucket name and object key
-    split_address = trimmed_address.split("/", 1)
-    object_key = split_address[1]
-
-    s3_bucket_url = f"https://thirdai-corp-public.s3.us-east-2.amazonaws.com"
-
-    file_url = f"{s3_bucket_url}/{object_key}"
-    import urllib.request
-
-    try:
-        urllib.request.urlretrieve(file_url, local_file_path)
-        print(f"File downloaded successfully: {local_file_path}")
-    except urllib.error.URLError as e:
-        raise RuntimeError("Error occurred during download:", e)
-
-
-# TODO(pratik): Add file reading from s3 back once, we solve this issue(https://github.com/ThirdAILabs/Universe/issues/1487
-def down_s3_data_callback(data_loader):
-    s3_file_address = data_loader.train_file
-    local_file_path = (
-        "/home/ubuntu/train_file"  # The path where you want to save the downloaded file
-    )
-
-    download_data_from_s3(s3_file_address, local_file_path)
-    data_loader.train_file = local_file_path
-
+EMBEDDING_DIM = args.embedding_dimension
 
 training_data_folder = "criteo-sample-split"
-if args.num_nodes == 12:
+if NUM_NODES == 12:
     training_data_folder = "criteo-split-12"
-if args.num_nodes == 24:
+if NUM_NODES == 24:
     training_data_folder = "criteo-split-24"
-if args.num_nodes == 48:
+if NUM_NODES == 48:
     training_data_folder = "criteo-split-48"
 
 
-data_types = {
-    f"numeric_{i}": bolt.types.numerical(range=(0, 1500)) for i in range(1, 14)
-}
-data_types.update({f"cat_{i}": bolt.types.categorical() for i in range(1, 27)})
-data_types["label"] = bolt.types.categorical()
+def train_loop_per_worker(config):
+    licensing.activate(activation_key)
 
-tabular_model = bolt.UniversalDeepTransformer(
-    data_types=data_types,
-    target="label",
-    n_target_classes=2,
-    integer_target=True,
-    options={"embedding_dimension": embedding_dimension},
-)
+    thirdai.logging.setup(log_to_stderr=False, path="log.txt", level="info")
 
-import time
+    model = get_udt_model(embedding_dimension=EMBEDDING_DIM)
+    model = dist.prepare_model(model)
+
+    train_file_s3 = f"s3://thirdai-corp-public/{training_data_folder}/train_file{session.get_world_rank():02}.txt"
+    train_file_local = os.path.join(
+        config.get("curr_dir"), f"train_file{session.get_world_rank():02}.txt"
+    )
+    download_data_from_s3(
+        s3_file_address=train_file_s3, local_file_path=train_file_local
+    )
+
+    model.train_distributed_v2(
+        filename=train_file_local,
+        learning_rate=args.learning_rate,
+        epochs=args.epochs,
+        batch_size=args.batch_size // args.num_nodes,
+        max_in_memory_batches=args.max_in_memory_batches,
+    )
+
+    session.report({}, checkpoint=dist.UDTCheckPoint.from_model(model))
 
 
 st = time.time()
-tabular_model.train_distributed(
-    cluster_config=ray_cluster_config(),
-    filenames=[
-        f"s3://thirdai-corp-public/{training_data_folder}/train_file{file_id}.txt"
-        if file_id >= 10
-        else f"s3://thirdai-corp-public/{training_data_folder}/train_file0{file_id}.txt"
-        for file_id in range(NUM_NODES)
-    ],
-    epochs=args.epochs,
-    learning_rate=args.learning_rate,
-    batch_size=args.batch_size,
-    max_in_memory_batches=args.max_in_memory_batches,
-    training_data_loader_callback=down_s3_data_callback,
+
+scaling_config = setup_ray(num_nodes=NUM_NODES, cpus_per_node=CPUS_PER_NODE)
+
+# Syncing files to the head node to be removed in Ray 2.7 in favor of cloud storage/NFS
+# Hence we use s3 storage for future compatibility. (https://docs.ray.io/en/master/tune/tutorials/tune-storage.html#configuring-tune-with-a-network-filesystem-nfs)
+run_config = RunConfig(
+    name=f"criteo_node_{NUM_NODES}_dim_{EMBEDDING_DIM}",
+    storage_path="s3://thirdai-ray-data/Public-Benchmarks/",
+    sync_config=SyncConfig(sync_artifacts=False, sync_period=1800),
 )
+
+trainer = dist.BoltTrainer(
+    train_loop_per_worker=train_loop_per_worker,
+    train_loop_config={"curr_dir": os.getcwd()},
+    scaling_config=scaling_config,
+    run_config=run_config,
+    backend_config=TorchConfig(backend="gloo"),
+)
+result_checkpoint_and_history = trainer.fit()
+
 en = time.time()
 print("Training Time:", en - st)
 
-directory_path = "trained_models"
+directory_path = os.path.join(os.getcwd(), "trained_models")
 if not os.path.exists(directory_path):
     os.makedirs(directory_path)
 
-tabular_model.save(
-    filename=f"{directory_path}/udt_click_prediction_{NUM_NODES}_{embedding_dimension}.model"
+trained_model = result_checkpoint_and_history.checkpoint.get_model()
+trained_model.save(
+    filename=f"{directory_path}/udt_click_prediction_{NUM_NODES}_{EMBEDDING_DIM}.model"
 )
 
 
 # This part of code is memory/CPU intensive as we would be loading the whole test data(11 GB) for evaluation.
 # If the head machine doesn't have enough memory and RAM. It is recommended to run it on a separate machine.
-tabular_model = bolt.UniversalDeepTransformer.load(
-    filename=f"{directory_path}/udt_click_prediction_{NUM_NODES}_{embedding_dimension}.model"
-)
+
+# define datatypes
+data_type_dict = [f"numeric_{i}" for i in range(1, 14)]
+data_type_dict.extend([f"cat_{i}" for i in range(1, 27)])
+
+
+@ray.remote(num_cpus=12)
+def eval_batch(filename, batch):
+    licensing.deactivate()
+    licensing.activate(activation_key)
+
+    tabular_model = bolt.UniversalDeepTransformer.load(filename=filename)
+
+    true_labels = []
+    test_sample_batch = []
+    for line in batch:
+        true_labels.append(np.float32(line.split(",")[0]))
+        test_sample_batch.append(dict(zip(data_type_dict, line.strip().split(",")[1:])))
+
+    activations = tabular_model.predict_batch(test_sample_batch)[:, 1]
+
+    return np.stack((true_labels, activations), axis=0)
+
 
 # Skip test for sample-training
 if args.num_nodes == 2:
@@ -219,40 +138,43 @@ if args.num_nodes == 2:
     )
 else:
     print(
-        f"Training is complete for model with {NUM_NODES} nodes and embedding dimension as {embedding_dimension}."
+        f"Training is complete for model with {NUM_NODES} nodes and embedding dimension as {EMBEDDING_DIM}."
     )
-    # TODO(pratik): Add file reading from s3 back once, we solve this issue(https://github.com/ThirdAILabs/Universe/issues/1487)
-    local_test_data = "/home/ubuntu/test_file"
+
+    local_test_data = "test_file.txt"
     download_data_from_s3("s3://thirdai-corp-public/test.txt", local_test_data)
 
     from itertools import islice
 
     chunk_size = 1000000
-    true_labels = []
-    activations = []
+    outputs = []
 
     # define datatypes
     data_type_dict = [f"numeric_{i}" for i in range(1, 14)]
     data_type_dict.extend([f"cat_{i}" for i in range(1, 27)])
 
+    model_path = (
+        f"{directory_path}/udt_click_prediction_{NUM_NODES}_{EMBEDDING_DIM}.model"
+    )
+
     with open(local_test_data) as f:
         header = f.readline()
-
         while True:
             test_sample_batch = []
             next_n_lines = list(islice(f, chunk_size))
             if not next_n_lines:
                 break
-            for line in next_n_lines:
-                true_labels.append(np.float32(line.split(",")[0]))
-                test_sample_batch.append(
-                    dict(zip(data_type_dict, line.strip().split(",")[1:]))
+            # Only run the task on the local node.
+            task_ref = eval_batch.options(
+                scheduling_strategy=ray.util.scheduling_strategies.NodeAffinitySchedulingStrategy(
+                    node_id=ray.get_runtime_context().get_node_id(),
+                    soft=False,
                 )
+            ).remote(model_path, next_n_lines)
+            outputs.append(task_ref)
 
-            activations.extend(tabular_model.predict_batch(test_sample_batch))
-
-    true_labels = np.array(true_labels)
-    activations = np.array(activations)
-    roc_auc = roc_auc_score(true_labels, activations[:, 1])
+    outputs = ray.get(outputs)
+    merged_output = np.concatenate(outputs, axis=1)
+    roc_auc = roc_auc_score(merged_output[0, :], merged_output[1, :])
 
     print("ROC_AUC:", roc_auc)

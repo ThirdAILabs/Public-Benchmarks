@@ -7,10 +7,13 @@ run_script() {
   MODEL_SIZE=$3
 
   # Display the current configuration
-  echo "Running with ${NUM_NODES} nodes, embedding dimension ${EMBEDDING_DIMENSION}, and ${MODEL_SIZE} model size" 2>&1 | tee -a log_file.txt
+  echo "Running with ${NUM_NODES} nodes, embedding dimension ${EMBEDDING_DIMENSION}, and ${MODEL_SIZE} model size" 
 
   # Execute the script with the current configuration
-  python3 train.py --num_nodes "${NUM_NODES}" --embedding_dimension "${EMBEDDING_DIMENSION}"
+  python3 train.py --num_nodes "${NUM_NODES}" --embedding_dimension "${EMBEDDING_DIMENSION}" 2>&1 | tee -a log_file.txt
+
+  # Clearing previous train/test files to free disk space for next iteration
+  rm -rf ~/ray_results train_file* test_file*
 }
 
 # Run the script for specific configurations
