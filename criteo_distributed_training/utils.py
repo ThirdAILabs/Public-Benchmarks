@@ -69,6 +69,11 @@ def parse_args():
         metavar="N",
         help="Maximum number of in-memory batches (default: 10)",
     )
+    parser.add_argument(
+        "--activation_key",
+        type=str,
+        help="Activation Key for using ThirdAI",
+    )
     args = parser.parse_args()
     return args
 
