@@ -15,9 +15,6 @@ from thirdai import bolt, licensing
 import thirdai.distributed_bolt as dist
 from utils import parse_args, setup_ray, get_udt_model, download_data_from_s3
 
-activation_key = "you-activation-key-here"
-licensing.activate(activation_key)
-
 
 args = parse_args()
 """
@@ -29,11 +26,15 @@ args = parse_args()
         --learning_rate
         --batch_size
         --max_in_memory_batches
+        --activation_key
 """
 
 NUM_NODES = args.num_nodes
 CPUS_PER_NODE = args.cpus_per_node
 EMBEDDING_DIM = args.embedding_dimension
+activation_key = args.activation_key
+licensing.activate(activation_key)
+
 
 training_data_folder = "criteo-sample-split"
 if NUM_NODES == 12:

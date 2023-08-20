@@ -133,9 +133,10 @@ To begin the training, follow these steps:
 1. Once cluster setup is done, ssh to the head node using ssh-command mentioned under `Get a remote shell to the cluster manually` under `Useful commands`. After ssh-ing into the head-node. 
 2. To proceed, first navigate to the `~/Public-Benchmarks/criteo_distributed_training` directory. Next, you have two options: 
 
-    a. If you wish to run all the demos at once, use the `run.sh` script. This will ensure smooth execution and provide a comprehensive overview.
+    a. If you wish to run all the demos at once, use the `run.sh <activation-key>` script. This will ensure smooth execution and provide a comprehensive overview.
+    Note: To obtain an activation key, please reach out to us via email at contact@thirdai.com.
 
-    b. Alternatively, if you prefer to run a smaller training job to verify the setup before running all the demos simultaneously, you can utilize the `run_minimal.sh` script. This will help confirm that everything is properly configured for executing the complete set of demos in one go.
+    b. Alternatively, if you prefer to run a smaller training job to verify the setup before running all the demos simultaneously, you can utilize the `run_minimal.sh <activation-key>` script. This will help confirm that everything is properly configured for executing the complete set of demos in one go.
 
 
 ## Evaluation
