@@ -140,7 +140,8 @@ To begin the training, follow these steps:
 
 
 ## Evaluation
-After completing the training, the evaluation script will also run on the same node. If the node has limited resources, we recommend saving the model after training and running the evaluation on a separate node with more memory and RAM after loading the model.
+After completing the training, the evaluation script will also run on the same node. It will create a log_file with the name of `log_file.txt`, which will contain all the statistic about the training. You can run `cat log_file.txt | grep -e "Running with" -e "Training Time:" -e "ROC_AUC:"` to obtain the relevant result for the training.
+
 
 ## Stop Ray Cluster
 Once the demo is done running, make sure to stop the ray cluster using `ray down aws_autoscalar.yaml`. 

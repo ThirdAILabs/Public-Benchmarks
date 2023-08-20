@@ -19,11 +19,11 @@ run_script() {
     This run ensures that we can successfully operate with a smaller training dataset. 
     To reproduce the results mentioned in the blog, 
     please execute the complete training process."
-  echo "Running with ${NUM_NODES} nodes, embedding dimension ${EMBEDDING_DIMENSION}, and ${MODEL_SIZE} model size"
+  echo "Running with ${NUM_NODES} nodes, embedding dimension ${EMBEDDING_DIMENSION}, and ${MODEL_SIZE} model size on sampled data"
 
   # Execute the script with the current configuration
-  python3 train.py --num_nodes "${NUM_NODES}" --embedding_dimension "${EMBEDDING_DIMENSION}" --activation_key "${ACTIVATION_KEY}" 2>&1 | tee -a log_file.txt
+  python3 train.py --num_nodes "${NUM_NODES}" --embedding_dimension "${EMBEDDING_DIMENSION}" --activation_key "${ACTIVATION_KEY}"
 }
 
 # Run the script for specific configurations
-run_script 2 256 "25M"
+run_script 2 256 "25M" 2>&1 | tee -a log_file.txt
