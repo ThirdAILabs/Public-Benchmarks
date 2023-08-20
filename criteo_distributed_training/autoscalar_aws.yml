@@ -161,7 +161,7 @@ initialization_commands: []
 setup_commands: 
   - sudo apt-get update -y
   - sudo DEBIAN_FRONTEND=noninteractive -E apt install python3.10 python3-pip -y
-  - pip3 install awscli thirdai 'ray[default]' botocore boto3 pyarrow numpy==1.23.5 s3fs "pydantic<2" torch
+  - pip3 install awscli thirdai==0.7.16 'ray[default]' botocore boto3 pyarrow numpy==1.23.5 s3fs "pydantic<2" torch
   - export PATH=$PATH:/home/$USER/.local/bin
     # Note: if you're developing Ray, you probably want to create a Docker image that
     # has your Ray repo pre-cloned. Then, you can replace the pip installs
