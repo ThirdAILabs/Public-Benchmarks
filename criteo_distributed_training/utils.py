@@ -70,6 +70,13 @@ def parse_args():
         help="Maximum number of in-memory batches (default: 10)",
     )
     parser.add_argument(
+        "--trainer_resources",
+        type=int,
+        default=24,
+        metavar="N",
+        help="Maximum number of in-memory batches (default: 10)",
+    )
+    parser.add_argument(
         "--activation_key",
         type=str,
         help="Activation Key for using ThirdAI",
@@ -78,7 +85,7 @@ def parse_args():
     return args
 
 
-def setup_ray(num_nodes=2, cpus_per_node=4):
+def setup_ray(num_nodes=2, cpus_per_node=4, trainer_resources=24):
     working_dir = os.path.dirname(os.path.realpath(__file__))
 
     ray.init(
@@ -95,7 +102,7 @@ def setup_ray(num_nodes=2, cpus_per_node=4):
     scaling_config = ray.air.ScalingConfig(
         num_workers=num_nodes,
         use_gpu=False,
-        trainer_resources={"CPU": 24},
+        trainer_resources={"CPU": trainer_resources},
         resources_per_worker={"CPU": cpus_per_node},
         placement_strategy="PACK",
     )

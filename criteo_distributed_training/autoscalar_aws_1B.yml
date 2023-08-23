@@ -71,7 +71,7 @@ available_node_types:
         # http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
         node_config:
             #[Public-Benchmark] If you want to run evaluation locally, you can use c5.2xlarge and comment out the eval code
-            InstanceType: r7g.16xlarge
+            InstanceType: r6i.16xlarge
             ImageId: ami-02f3416038bdb17fb # Deep Learning AMI (Ubuntu) Version 30
             # You can provision additional disk space with a conf as follows
             BlockDeviceMappings:
@@ -98,7 +98,7 @@ available_node_types:
         # For more documentation on available fields, see:
         # http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
         node_config:
-            InstanceType: r7g.12xlarge
+            InstanceType: r6i.12xlarge
             ImageId: ami-02f3416038bdb17fb # Deep Learning AMI (Ubuntu) Version 30
             BlockDeviceMappings:
                 - DeviceName: /dev/sda1

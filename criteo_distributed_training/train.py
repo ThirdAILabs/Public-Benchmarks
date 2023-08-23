@@ -33,6 +33,7 @@ NUM_NODES = args.num_nodes
 CPUS_PER_NODE = args.cpus_per_node
 EMBEDDING_DIM = args.embedding_dimension
 activation_key = args.activation_key
+trainer_resources = args.trainer_resources
 licensing.activate(activation_key)
 
 
@@ -74,7 +75,11 @@ def train_loop_per_worker(config):
 
 st = time.time()
 
-scaling_config = setup_ray(num_nodes=NUM_NODES, cpus_per_node=CPUS_PER_NODE)
+scaling_config = setup_ray(
+    num_nodes=NUM_NODES,
+    cpus_per_node=CPUS_PER_NODE,
+    trainer_resources=trainer_resources,
+)
 
 # Syncing files to the head node to be removed in Ray 2.7 in favor of cloud storage/NFS
 # Hence we use s3 storage for future compatibility. (https://docs.ray.io/en/master/tune/tutorials/tune-storage.html#configuring-tune-with-a-network-filesystem-nfs)
