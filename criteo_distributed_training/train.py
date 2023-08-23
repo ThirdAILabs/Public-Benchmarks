@@ -120,7 +120,7 @@ data_type_dict = [f"numeric_{i}" for i in range(1, 14)]
 data_type_dict.extend([f"cat_{i}" for i in range(1, 27)])
 
 
-@ray.remote(num_cpus=12)
+@ray.remote(num_cpus=trainer_resources / 2)
 def eval_batch(filename, batch):
     licensing.deactivate()
     licensing.activate(activation_key)
