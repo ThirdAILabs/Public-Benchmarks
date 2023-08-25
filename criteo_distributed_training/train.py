@@ -67,6 +67,7 @@ def train_loop_per_worker(config):
             epochs=1,
             batch_size=args.batch_size // args.num_nodes,
             max_in_memory_batches=args.max_in_memory_batches,
+            metrics=["loss"],
         )
         if session.get_world_rank() == 0:
             model.save(f"trained_model_{epoch}")
