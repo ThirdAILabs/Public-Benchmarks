@@ -25,5 +25,5 @@ run_script() {
 }
 
 # Run the script for specific configurations
-run_script 12 10240 "1B" 2>&1 | tee -a log_file.txt
+run_script 24 10240 "1B" 2>&1 | tee -a log_file.txt
 
