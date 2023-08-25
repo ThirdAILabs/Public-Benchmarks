@@ -153,7 +153,10 @@ else:
 
     from itertools import islice
 
-    chunk_size = 1000000
+    if EMBEDDING_DIM < 1000:
+        chunk_size = 1000000
+    else:
+        chunk_size = 1000
     outputs = []
 
     # define datatypes
