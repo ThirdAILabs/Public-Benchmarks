@@ -60,14 +60,16 @@ def train_loop_per_worker(config):
     download_data_from_s3(
         s3_file_address=train_file_s3, local_file_path=train_file_local
     )
-
-    model.train_distributed_v2(
-        filename=train_file_local,
-        learning_rate=args.learning_rate,
-        epochs=args.epochs,
-        batch_size=args.batch_size // args.num_nodes,
-        max_in_memory_batches=args.max_in_memory_batches,
-    )
+    for epoch in range(args.epochs):
+        model.train_distributed_v2(
+            filename=train_file_local,
+            learning_rate=args.learning_rate,
+            epochs=1,
+            batch_size=args.batch_size // args.num_nodes,
+            max_in_memory_batches=args.max_in_memory_batches,
+        )
+        if session.get_world_rank() == 0:
+            model.save(f"trained_model_{epoch}")
 
     session.report({}, checkpoint=dist.UDTCheckPoint.from_model(model))
 

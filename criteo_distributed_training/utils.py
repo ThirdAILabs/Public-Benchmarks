@@ -44,21 +44,21 @@ def parse_args():
     parser.add_argument(
         "--epochs",
         type=int,
-        default=1,
+        default=10,
         metavar="N",
         help="Number of epochs to train the model (default: 1)",
     )
     parser.add_argument(
         "--learning_rate",
         type=float,
-        default=0.005,
+        default=0.001,
         metavar="LR",
         help="Learning rate for the model (default: 0.005)",
     )
     parser.add_argument(
         "--batch_size",
         type=int,
-        default=720000,
+        default=960000,
         metavar="N",
         help="Batch size for training (default: 720000)",
     )
