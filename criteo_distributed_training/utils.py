@@ -85,7 +85,7 @@ def parse_args():
     return args
 
 
-def setup_ray(num_nodes=2, cpus_per_node=4, trainer_resources=24):
+def setup_ray(num_nodes=2, cpus_per_node=4, trainer_resources=16):
     working_dir = os.path.dirname(os.path.realpath(__file__))
 
     ray.init(
