@@ -85,7 +85,7 @@ def parse_args():
     return args
 
 
-def setup_ray(num_nodes=2, cpus_per_node=4, trainer_resources=16):
+def setup_ray(num_nodes=2, cpus_per_node=4):
     working_dir = os.path.dirname(os.path.realpath(__file__))
 
     ray.init(
@@ -102,7 +102,7 @@ def setup_ray(num_nodes=2, cpus_per_node=4, trainer_resources=16):
     scaling_config = ray.air.ScalingConfig(
         num_workers=num_nodes,
         use_gpu=False,
-        trainer_resources={"CPU": trainer_resources},
+        trainer_resources={"CPU": 16},
         resources_per_worker={"CPU": cpus_per_node},
         placement_strategy="PACK",
     )

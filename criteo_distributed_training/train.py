@@ -33,7 +33,6 @@ NUM_NODES = args.num_nodes
 CPUS_PER_NODE = args.cpus_per_node
 EMBEDDING_DIM = args.embedding_dimension
 activation_key = args.activation_key
-trainer_resources = args.trainer_resources
 licensing.activate(activation_key)
 
 
@@ -78,7 +77,6 @@ st = time.time()
 scaling_config = setup_ray(
     num_nodes=NUM_NODES,
     cpus_per_node=CPUS_PER_NODE,
-    trainer_resources=trainer_resources,
 )
 
 # Syncing files to the head node to be removed in Ray 2.7 in favor of cloud storage/NFS
