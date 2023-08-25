@@ -72,7 +72,7 @@ def parse_args():
     parser.add_argument(
         "--trainer_resources",
         type=int,
-        default=24,
+        default=16,
         metavar="N",
         help="Maximum number of in-memory batches (default: 10)",
     )

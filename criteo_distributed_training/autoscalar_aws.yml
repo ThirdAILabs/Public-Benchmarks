@@ -71,13 +71,13 @@ available_node_types:
         # http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
         node_config:
             #[Public-Benchmark] If you want to run evaluation locally, you can use c5.2xlarge and comment out the eval code
-            InstanceType: c5.18xlarge
+            InstanceType: r6in.16xlarge
             ImageId: ami-02f3416038bdb17fb # Deep Learning AMI (Ubuntu) Version 30
             # You can provision additional disk space with a conf as follows
             BlockDeviceMappings:
                 - DeviceName: /dev/sda1
                   Ebs:
-                      VolumeSize: 200
+                      VolumeSize: 300
             
             # Additional options in the boto docs.
     ray.worker.default:
@@ -98,12 +98,12 @@ available_node_types:
         # For more documentation on available fields, see:
         # http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
         node_config:
-            InstanceType: c5.12xlarge
+            InstanceType: r6in.12xlarge
             ImageId: ami-02f3416038bdb17fb # Deep Learning AMI (Ubuntu) Version 30
             BlockDeviceMappings:
                 - DeviceName: /dev/sda1
                   Ebs:
-                      VolumeSize: 150
+                      VolumeSize: 300
         
             # By default, worker node launched from head doesn't have s3 access. Hence, we pass a custom instance-profile that grants the s3 access.
             # https://github.com/ray-project/ray/issues/9327
