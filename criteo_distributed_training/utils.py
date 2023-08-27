@@ -93,7 +93,7 @@ def setup_ray(num_nodes=2, cpus_per_node=4):
             "working_dir": working_dir,
             "env_vars": {
                 "OMP_NUM_THREADS": f"{cpus_per_node}",
-                "GLOO_SOCKET_IFNAME": "ens5",
+                "GLOO_SOCKET_IFNAME": "enp34s0",
             },
             "excludes": ["trained_models", "*.txt"],
         },
