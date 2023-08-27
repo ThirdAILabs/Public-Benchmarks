@@ -98,7 +98,7 @@ available_node_types:
         # For more documentation on available fields, see:
         # http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
         node_config:
-            InstanceType: rx2idn.16xlarge
+            InstanceType: x2idn.16xlarge
             ImageId: ami-02f3416038bdb17fb # Deep Learning AMI (Ubuntu) Version 30
             BlockDeviceMappings:
                 - DeviceName: /dev/sda1
