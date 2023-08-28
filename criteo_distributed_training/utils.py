@@ -74,7 +74,7 @@ def parse_args():
         type=int,
         default=16,
         metavar="N",
-        help="Maximum number of in-memory batches (default: 10)",
+        help="Resources assigned to trainer (default: 16)",
     )
     parser.add_argument(
         "--activation_key",
