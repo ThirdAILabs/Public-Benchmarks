@@ -122,9 +122,6 @@ tabular_model = bolt.UniversalDeepTransformer.load(filename=model_path)
 
 
 def eval_batch(batch):
-    licensing.deactivate()
-    licensing.activate(activation_key)
-
     true_labels = []
     test_sample_batch = []
     for line in batch:
