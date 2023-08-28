@@ -116,13 +116,14 @@ trained_model.save(
 data_type_dict = [f"numeric_{i}" for i in range(1, 14)]
 data_type_dict.extend([f"cat_{i}" for i in range(1, 27)])
 
+model_path = f"{directory_path}/udt_click_prediction_{NUM_NODES}_{EMBEDDING_DIM}.model"
 
-@ray.remote(num_cpus=12)
-def eval_batch(filename, batch):
+tabular_model = bolt.UniversalDeepTransformer.load(filename=model_path)
+
+
+def eval_batch(batch):
     licensing.deactivate()
     licensing.activate(activation_key)
-
-    tabular_model = bolt.UniversalDeepTransformer.load(filename=filename)
 
     true_labels = []
     test_sample_batch = []
@@ -160,10 +161,6 @@ else:
     data_type_dict = [f"numeric_{i}" for i in range(1, 14)]
     data_type_dict.extend([f"cat_{i}" for i in range(1, 27)])
 
-    model_path = (
-        f"{directory_path}/udt_click_prediction_{NUM_NODES}_{EMBEDDING_DIM}.model"
-    )
-
     with open(local_test_data) as f:
         header = f.readline()
         while True:
@@ -171,16 +168,9 @@ else:
             next_n_lines = list(islice(f, chunk_size))
             if not next_n_lines:
                 break
-            # Only run the task on the local node.
-            task_ref = eval_batch.options(
-                scheduling_strategy=ray.util.scheduling_strategies.NodeAffinitySchedulingStrategy(
-                    node_id=ray.get_runtime_context().get_node_id(),
-                    soft=False,
-                )
-            ).remote(model_path, next_n_lines)
-            outputs.append(task_ref)
+            results = eval_batch(next_n_lines)
+            outputs.append(results)
 
-    outputs = ray.get(outputs)
     merged_output = np.concatenate(outputs, axis=1)
     roc_auc = roc_auc_score(merged_output[0, :], merged_output[1, :])
 
