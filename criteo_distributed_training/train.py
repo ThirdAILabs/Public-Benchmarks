@@ -154,7 +154,7 @@ else:
     if EMBEDDING_DIM < 1000:
         chunk_size = 1000000
     else:
-        chunk_size = 1000
+        chunk_size = 10000
     outputs = []
 
     # define datatypes
