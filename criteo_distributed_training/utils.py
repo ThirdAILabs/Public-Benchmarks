@@ -51,7 +51,7 @@ def parse_args():
     parser.add_argument(
         "--learning_rate",
         type=float,
-        default=0.005,
+        default=0.001,
         metavar="LR",
         help="Learning rate for the model (default: 0.005)",
     )
@@ -65,9 +65,16 @@ def parse_args():
     parser.add_argument(
         "--max_in_memory_batches",
         type=int,
-        default=3,
+        default=10,
         metavar="N",
         help="Maximum number of in-memory batches (default: 10)",
+    )
+    parser.add_argument(
+        "--trainer_resources",
+        type=int,
+        default=16,
+        metavar="N",
+        help="Resources assigned to trainer (default: 16)",
     )
     parser.add_argument(
         "--activation_key",
@@ -86,7 +93,7 @@ def setup_ray(num_nodes=2, cpus_per_node=4):
             "working_dir": working_dir,
             "env_vars": {
                 "OMP_NUM_THREADS": f"{cpus_per_node}",
-                "GLOO_SOCKET_IFNAME": "ens5",
+                "GLOO_SOCKET_IFNAME": "enp34s0",
             },
             "excludes": ["trained_models", "*.txt"],
         },
@@ -95,7 +102,7 @@ def setup_ray(num_nodes=2, cpus_per_node=4):
     scaling_config = ray.air.ScalingConfig(
         num_workers=num_nodes,
         use_gpu=False,
-        trainer_resources={"CPU": 24},
+        trainer_resources={"CPU": 16},
         resources_per_worker={"CPU": cpus_per_node},
         placement_strategy="PACK",
     )

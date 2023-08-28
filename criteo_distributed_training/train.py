@@ -60,7 +60,6 @@ def train_loop_per_worker(config):
     download_data_from_s3(
         s3_file_address=train_file_s3, local_file_path=train_file_local
     )
-
     model.train_distributed_v2(
         filename=train_file_local,
         learning_rate=args.learning_rate,
@@ -74,7 +73,10 @@ def train_loop_per_worker(config):
 
 st = time.time()
 
-scaling_config = setup_ray(num_nodes=NUM_NODES, cpus_per_node=CPUS_PER_NODE)
+scaling_config = setup_ray(
+    num_nodes=NUM_NODES,
+    cpus_per_node=CPUS_PER_NODE,
+)
 
 # Syncing files to the head node to be removed in Ray 2.7 in favor of cloud storage/NFS
 # Hence we use s3 storage for future compatibility. (https://docs.ray.io/en/master/tune/tutorials/tune-storage.html#configuring-tune-with-a-network-filesystem-nfs)
@@ -114,13 +116,14 @@ trained_model.save(
 data_type_dict = [f"numeric_{i}" for i in range(1, 14)]
 data_type_dict.extend([f"cat_{i}" for i in range(1, 27)])
 
+model_path = f"{directory_path}/udt_click_prediction_{NUM_NODES}_{EMBEDDING_DIM}.model"
 
-@ray.remote(num_cpus=12)
-def eval_batch(filename, batch):
+tabular_model = bolt.UniversalDeepTransformer.load(filename=model_path)
+
+
+def eval_batch(batch):
     licensing.deactivate()
     licensing.activate(activation_key)
-
-    tabular_model = bolt.UniversalDeepTransformer.load(filename=filename)
 
     true_labels = []
     test_sample_batch = []
@@ -148,16 +151,15 @@ else:
 
     from itertools import islice
 
-    chunk_size = 1000000
+    if EMBEDDING_DIM < 1000:
+        chunk_size = 1000000
+    else:
+        chunk_size = 1000
     outputs = []
 
     # define datatypes
     data_type_dict = [f"numeric_{i}" for i in range(1, 14)]
     data_type_dict.extend([f"cat_{i}" for i in range(1, 27)])
-
-    model_path = (
-        f"{directory_path}/udt_click_prediction_{NUM_NODES}_{EMBEDDING_DIM}.model"
-    )
 
     with open(local_test_data) as f:
         header = f.readline()
@@ -166,16 +168,9 @@ else:
             next_n_lines = list(islice(f, chunk_size))
             if not next_n_lines:
                 break
-            # Only run the task on the local node.
-            task_ref = eval_batch.options(
-                scheduling_strategy=ray.util.scheduling_strategies.NodeAffinitySchedulingStrategy(
-                    node_id=ray.get_runtime_context().get_node_id(),
-                    soft=False,
-                )
-            ).remote(model_path, next_n_lines)
-            outputs.append(task_ref)
+            results = eval_batch(next_n_lines)
+            outputs.append(results)
 
-    outputs = ray.get(outputs)
     merged_output = np.concatenate(outputs, axis=1)
     roc_auc = roc_auc_score(merged_output[0, :], merged_output[1, :])
 

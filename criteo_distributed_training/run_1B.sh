@@ -18,21 +18,14 @@ run_script() {
   echo "Running with ${NUM_NODES} nodes, embedding dimension ${EMBEDDING_DIMENSION}, and ${MODEL_SIZE} model size" 
 
   # Execute the script with the current configuration
-  python3 train.py --num_nodes "${NUM_NODES}" --embedding_dimension "${EMBEDDING_DIMENSION}" --activation_key "${ACTIVATION_KEY}" --learning_rate 0.005
+  python3 train.py --num_nodes "${NUM_NODES}" --embedding_dimension "${EMBEDDING_DIMENSION}" --activation_key "${ACTIVATION_KEY}" --batch_size 960000 --epochs 2
 
   # Clearing previous train/test files to free disk space for next iteration
   rm -rf ~/ray_results train_file* test_file*
 }
 
 # Run the script for specific configurations
-run_script 48 256 "25M" 2>&1 | tee -a log_file.txt
-run_script 48 384 "37.5M" 2>&1 | tee -a log_file.txt
-run_script 48 512 "50M" 2>&1 | tee -a log_file.txt
+run_script 48 10240 "1B" 2>&1 | tee -a log_file.txt
+run_script 24 10240 "1B" 2>&1 | tee -a log_file.txt
+run_script 12 10240 "1B" 2>&1 | tee -a log_file.txt
 
-run_script 24 256 "25M" 2>&1 | tee -a log_file.txt
-run_script 24 384 "37.5M" 2>&1 | tee -a log_file.txt
-run_script 24 512 "50M" 2>&1 | tee -a log_file.txt
-
-run_script 12 256 "25M" 2>&1 | tee -a log_file.txt
-run_script 12 384 "37.5M" 2>&1 | tee -a log_file.txt
-run_script 12 512 "50M" 2>&1 | tee -a log_file.txt
