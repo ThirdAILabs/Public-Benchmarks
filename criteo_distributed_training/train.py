@@ -81,11 +81,11 @@ scaling_config = setup_ray(
 # Syncing files to the head node to be removed in Ray 2.7 in favor of cloud storage/NFS
 # Hence we use s3 storage for future compatibility. (https://docs.ray.io/en/master/tune/tutorials/tune-storage.html#configuring-tune-with-a-network-filesystem-nfs)
 # uncomment it if using S3 for checkpoint
-# run_config = RunConfig(
-# name=f"criteo_node_{NUM_NODES}_dim_{EMBEDDING_DIM}",
-# storage_path="<Your S3 Bucket>/ThirdAI-Public-Benchmarks/",
-# sync_config=SyncConfig(sync_artifacts=False, sync_period=1800),
-# )
+run_config = RunConfig(
+    name=f"criteo_node_{NUM_NODES}_dim_{EMBEDDING_DIM}",
+    storage_path="s3://thirdai-ray-data/Public-Benchmarks/",
+    sync_config=SyncConfig(sync_artifacts=False, sync_period=1800),
+)
 
 trainer = dist.BoltTrainer(
     train_loop_per_worker=train_loop_per_worker,

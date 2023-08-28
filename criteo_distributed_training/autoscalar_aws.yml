@@ -109,7 +109,7 @@ available_node_types:
             # https://github.com/ray-project/ray/issues/9327
             # Note: Be sure to define run config in train.py if using aws for checkpointing.
             # IamInstanceProfile:
-            #     Arn: arn:aws:iam::YOUR_AWS_ACCOUNT_NUMBER:YOUR_INSTANCE_PROFILE
+                Arn: arn:aws:iam::199696198976:instance-profile/ray-autoscaler-v1
             
             # Run workers on spot by default. Comment this out to use on-demand.
             # NOTE: If relying on spot instances, it is best to specify multiple different instance
