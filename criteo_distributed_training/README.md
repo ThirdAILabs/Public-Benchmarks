@@ -130,7 +130,7 @@ ray.worker.default:
 
 To begin the training, follow these steps:
 
-1. Once cluster setup is done, ssh to the head node using ssh-command mentioned under `Get a remote shell to the cluster manually` under `Useful commands`. After ssh-ing into the head-node. 
+1. Once cluster setup is done, ssh to the head node using ssh-command mentioned under `Get a remote shell to the cluster manually` under `Useful commands`. After ssh-ing into the head-node. Because this benchmark takes few hours, we advice to use the following command to ssh to the head node: `ray attach autoscalar_aws.yml --tmux`, and should you lose a connection, you can connect again with `ray attach autscaler_aws.yml --tmux` again. 
 2. To proceed, first navigate to the `~/Public-Benchmarks/criteo_distributed_training` directory. Next, you have two options: 
 
     a. If you wish to run all the demos of smaller models at once, use the `run.sh <activation-key>` script. You can run the demo for 1B parameter model with `./run_1B.sh <activation-key>`This will ensure smooth execution and provide a comprehensive overview.
