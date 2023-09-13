@@ -1,8 +1,8 @@
 ## Introduction
 
-This repository contains scripts for each training, including the main training script `train.py` and the dataset preprocessing file `process_to_csv.py`. Additionally, the `run.sh` script includes commands for running all the trainings, assuming the datasets are available.
+This repository contains scripts for running distributed training jobs on the [Criteo TB Clickthrough Prediction Benchmark](https://ailab.criteo.com/download-criteo-1tb-click-logs-dataset/) discussed in this [blog post](https://www.anyscale.com/blog/how-thirdai-uses-ray-for-parallel-training-of-billion-parameter-neural-networks-on-commodity-cpus). The two main files are the model training script `train.py` and the dataset preprocessing script `process_to_csv.py`. Additionally, the `run.sh` script includes commands for running all the training benchmarks, assuming the datasets are available.
 
-We ran it on VMware vSphere cluster with 12, 24, and 48 nodes, each having 4 vCPUs and 8 GB RAM. The cluster consisted of 5 servers connected through interconnect with a modest communication speed of 10Gbps.
+All of these benchmarks are run on AWS machines. 
 
 ### Machine Configuration:
 
@@ -18,11 +18,12 @@ We ran it on VMware vSphere cluster with 12, 24, and 48 nodes, each having 4 vCP
 
 Following is the evaluation of UDT on the **Click Through Prediction** Task.
 
-| Parameters | Training Time | AUC    |
+| Parameters | Training Time | ROC-AUC|
 | ---------- | ------------- | ------ |
 | 25M        | 69 min        | 0.7921 |
 | 37.5M      | 96 min        | 0.7947 |
 | 50M        | 128 min       | 0.7954 |
+| 1B         | 11 hrs        |0.8001  |
 
 ## Dataset
 
